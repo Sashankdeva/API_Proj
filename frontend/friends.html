@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends | Squad Up</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>SQUAD UP</h2>
+            </div>
+            <div class="sidebar-nav">
+                <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <div class="nav-item-group">
+                    <a href="friends.html" class="nav-item active" id="friends-link">
+                        <i class="fas fa-user-friends"></i><span>Friends</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="friends.html#all" class="dropdown-item">All Friends</a>
+                        <a href="friends.html#pending" class="dropdown-item">
+                            Pending Requests
+                            <span class="badge-sm" id="sidebar-pending-badge" style="display:none;"></span>
+                        </a>
+                    </div>
+                </div>
+                <a href="squads.html" class="nav-item"><i class="fas fa-users"></i><span>My Squads</span></a>
+                <a href="chat.html" class="nav-item"><i class="fas fa-comments"></i><span>Chat</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+            </div>
+            <div class="profile-section">
+                <a href="profile.html" class="nav-item profile-tab">
+                    <div class="avatar" id="sidebar-avatar">
+                        <img src="https://ui-avatars.com/api/?name=?&background=0D8ABC&color=fff" alt="Profile"
+                            id="sidebar-avatar-img">
+                    </div>
+                    <div class="profile-tab-labels">
+                        <span class="profile-tab-title">My Profile</span>
+                        <span class="profile-tab-username" id="sidebar-username"></span>
+                    </div>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content friends-main">
+            <div class="friends-header">
+                <h1>Friends</h1>
+                <div class="friends-tabs">
+                    <button class="friends-tab-btn active" id="tab-btn-all" onclick="switchFriendsTab('all')">
+                        All Friends <span class="badge" id="friends-count-badge" style="display:none;"></span>
+                    </button>
+                    <button class="friends-tab-btn" id="tab-btn-pending" onclick="switchFriendsTab('pending')">
+                        Pending Requests <span class="badge" id="pending-count-badge" style="display:none;"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── All Friends Tab ──────────────────────────────── -->
+            <div id="all-friends-tab" class="friends-tab-content active">
+                <div class="friends-add-bar">
+                    <input type="text" id="addFriendInput" class="search-input" placeholder="Enter username to add friend…"
+                        onkeydown="if(event.key==='Enter') sendFriendRequest()">
+                    <button class="btn-create-squad" onclick="sendFriendRequest()">
+                        <i class="fas fa-user-plus"></i> Add Friend
+                    </button>
+                </div>
+                <div class="friends-grid" id="friends-grid">
+                    <div class="friends-empty" id="friends-empty" style="display:none;">
+                        <i class="fas fa-user-friends"></i>
+                        <p>Your friends list is empty. Start building your network by adding players!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Pending Requests Tab ────────────────────────── -->
+            <div id="pending-requests-tab" class="friends-tab-content">
+                <div class="friends-grid" id="pending-grid">
+                    <div class="friends-empty" id="pending-empty">
+                        <i class="fas fa-inbox"></i>
+                        <p>No pending friend requests.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = AuthService.getCurrentUser();
+            if (!currentUser) return;
+
+            await Promise.all([loadFriends(), loadPending()]);
+
+            // Auto-switch tab from URL hash
+            const hash = window.location.hash;
+            if (hash === '#pending') switchFriendsTab('pending');
+        });
+
+        // ── Tab switcher ──────────────────────────────────────────
+        function switchFriendsTab(tab) {
+            document.getElementById('all-friends-tab').classList.toggle('active', tab === 'all');
+            document.getElementById('pending-requests-tab').classList.toggle('active', tab === 'pending');
+            document.getElementById('tab-btn-all').classList.toggle('active', tab === 'all');
+            document.getElementById('tab-btn-pending').classList.toggle('active', tab === 'pending');
+        }
+
+        // ── Load friends from API ─────────────────────────────────
+        async function loadFriends() {
+            try {
+                const res = await fetch(`${API}/api/chat/friends/${currentUser.id}`);
+                const data = await res.json();
+                renderFriends(data.friends || []);
+            } catch { renderFriends([]); }
+        }
+
+        function renderFriends(friends) {
+            const grid = document.getElementById('friends-grid');
+            const empty = document.getElementById('friends-empty');
+            const badge = document.getElementById('friends-count-badge');
+            
+            const validFriends = friends.filter(f => f && f.username);
+
+            // Remove old cards
+            grid.querySelectorAll('.friend-card').forEach(el => el.remove());
+
+            if (!validFriends.length) {
+                empty.style.display = 'flex';
+                badge.style.display = 'none';
+                return;
+            }
+            empty.style.display = 'none';
+            badge.textContent = validFriends.length;
+            badge.style.display = '';
+
+            validFriends.forEach(f => {
+                const displayName = f.displayName || f.username;
+                const char = displayName ? displayName[0].toUpperCase() : '?';
+                const avatarUrl = f.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=00f3ff&size=128`;
+
+                const card = document.createElement('div');
+                card.className = 'friend-card';
+                card.innerHTML = `
+                    <div class="friend-card-header">
+                        <img src="${escHtml(avatarUrl)}" alt="${escHtml(displayName)}" class="friend-avatar">
+                        <div class="friend-info">
+                            <h3>${escHtml(displayName)}</h3>
+                            <p class="friend-username">@${escHtml(f.username)}</p>
+                        </div>
+                    </div>
+                    <div class="friend-card-actions">
+                        <button class="btn-chat" title="Chat" onclick="goToChat('friend','${escHtml(f.username)}')">
+                            <i class="fas fa-comments"></i> Chat
+                        </button>
+                        <button class="btn-danger-action" title="Block" onclick="alert('Block feature coming soon!')">
+                            <i class="fas fa-ban"></i> Block
+                        </button>
+                        <button class="btn-danger-action" title="Unfriend"
+                            onclick="unfriend('${f.friendshipId}', this.closest('.friend-card'))">
+                            <i class="fas fa-user-times"></i> Unfriend
+                        </button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Load pending requests from API ────────────────────────
+        async function loadPending() {
+            try {
+                const res = await fetch(`${API}/api/chat/friends/pending/${currentUser.id}`);
+                const data = await res.json();
+                renderPending(data.pending || []);
+            } catch { renderPending([]); }
+        }
+
+        function renderPending(pending) {
+            const grid = document.getElementById('pending-grid');
+            const empty = document.getElementById('pending-empty');
+            const badge = document.getElementById('pending-count-badge');
+            
+            const validPending = pending.filter(p => p && p.username);
+
+            grid.querySelectorAll('.friend-card').forEach(el => el.remove());
+
+            if (!validPending.length) {
+                empty.style.display = 'flex';
+                badge.style.display = 'none';
+                var sb = document.getElementById('sidebar-pending-badge');
+                if (sb) sb.style.display = 'none';
+                return;
+            }
+            empty.style.display = 'none';
+            badge.textContent = validPending.length;
+            badge.style.display = '';
+            var sb2 = document.getElementById('sidebar-pending-badge');
+            if (sb2) { sb2.textContent = validPending.length; sb2.style.display = ''; }
+
+            validPending.forEach(p => {
+                const displayName = p.displayName || p.username;
+                const char = displayName ? displayName[0].toUpperCase() : '?';
+                const avatarUrl = p.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=bd00ff&size=128`;
+
+                const card = document.createElement('div');
+                card.className = 'friend-card';
+                card.innerHTML = `
+                    <div class="friend-card-header">
+                        <img src="${escHtml(avatarUrl)}" alt="${escHtml(displayName)}" class="friend-avatar">
+                        <div class="friend-info">
+                            <h3>${escHtml(displayName)}</h3>
+                            <p class="friend-username">@${escHtml(p.username)} wants to be friends</p>
+                        </div>
+                    </div>
+                    <div class="friend-card-actions">
+                        <button class="btn-accept" onclick="respondFriend('${p.friendshipId}','accept',this.closest('.friend-card'))">
+                            <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button class="btn-reject" onclick="respondFriend('${p.friendshipId}','reject',this.closest('.friend-card'))">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Send friend request ───────────────────────────────────
+        async function sendFriendRequest() {
+            const input = document.getElementById('addFriendInput');
+            const username = input.value.trim();
+            if (!username) { alert('Please enter a username.'); return; }
+
+            try {
+                const res = await fetch(`${API}/api/chat/friends/request`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requesterId: currentUser.id, recipientUsername: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Friend request sent successfully to ' + username + '!');
+                    input.value = '';
+                    // Update pending badge on sender side as well
+                    if (typeof loadPendingBadge === 'function') loadPendingBadge();
+                } else {
+                    alert(data.error || 'Could not send friend request.');
+                }
+            } catch {
+                alert('Could not reach server. Please try again later.');
+            }
+        }
+
+        async function respondFriend(friendshipId, action, card) {
+            try {
+                await fetch(`${API}/api/chat/friends/respond`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ friendshipId, action })
+                });
+                card.remove();
+                if (action === 'accept') loadFriends();
+                loadPending();
+                if (typeof loadPendingBadge === 'function') loadPendingBadge();
+            } catch (e) { console.error('respondFriend:', e); }
+        }
+
+        // ── Unfriend ──────────────────────────────────────────────
+        async function unfriend(friendshipId, card) {
+            if (!confirm('Remove this friend?')) return;
+            try {
+                await fetch(`${API}/api/chat/friends/${friendshipId}`, { method: 'DELETE' });
+                card.remove();
+                loadFriends();
+            } catch (e) { console.error('unfriend:', e); }
+        }
+
+        // ── Go to chat ────────────────────────────────────────────
+        function goToChat(type, target) {
+            sessionStorage.setItem('chat_open', JSON.stringify({ type, target }));
+            window.location.href = 'chat.html';
+        }
+
+        function escHtml(str) {
+            return String(str).replace(/[&<>"']/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+    </script>
+</body>
+
+</html>

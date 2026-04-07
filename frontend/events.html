@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events | Squad Up</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        select option {
+            background-color: #1a1a24;
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>SQUAD UP</h2>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="home.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+
+                <div class="nav-item-group">
+                    <a href="friends.html" class="nav-item" id="friends-link">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Friends</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="friends.html#all" class="dropdown-item">All Friends</a>
+                        <a href="friends.html#pending" class="dropdown-item">
+                            Pending Requests
+                            <span class="badge-sm" id="sidebar-pending-badge" style="display:none;"></span>
+                        </a>
+                    </div>
+                </div>
+
+                <a href="squads.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>My Squads</span>
+                </a>
+
+                <a href="chat.html" class="nav-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </a>
+
+                <a href="events.html" class="nav-item active">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Events</span>
+                </a>
+            </div>
+
+            <div class="profile-section">
+                <a href="profile.html" class="nav-item profile-tab">
+                    <div class="avatar" id="sidebar-avatar">
+                        <img src="https://ui-avatars.com/api/?name=?&background=0D8ABC&color=fff" alt="Profile"
+                            id="sidebar-avatar-img">
+                    </div>
+                    <div class="profile-tab-labels">
+                        <span class="profile-tab-title">My Profile</span>
+                        <span class="profile-tab-username" id="sidebar-username"></span>
+                    </div>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content squads-main">
+
+            <!-- Page Header -->
+            <div class="squads-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <h1>Events</h1>
+                    <button class="btn-create-squad" onclick="openFilterModal()">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tournament Cards Grid -->
+            <div class="events-grid" id="eventsGrid">
+
+                <div class="event-card" data-game="Valorant" data-region="APAC" data-squad="Team">
+                    <div class="event-card-banner valorant-banner">
+                        <span class="event-game-tag">Valorant</span>
+                        <span class="event-live-badge"><i class="fas fa-circle"></i> Registrations Open</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>Valorant Friday Customs</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> Every Friday 8PM</span>
+                            <span><i class="fas fa-globe-asia"></i> APAC</span>
+                            <span><i class="fas fa-users"></i> Team</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">Discord Nitro</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Teams</span><span
+                                    class="event-detail-value">32 / 64</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">5v5</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+                <div class="event-card" data-game="Apex Legends" data-region="NA" data-squad="Team">
+                    <div class="event-card-banner apex-banner">
+                        <span class="event-game-tag">Apex Legends</span>
+                        <span class="event-live-badge"><i class="fas fa-circle"></i> Registrations Open</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>Apex Weekend Grind Lobbies</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> Saturday 6PM</span>
+                            <span><i class="fas fa-globe-americas"></i> NA</span>
+                            <span><i class="fas fa-users"></i> Team</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">Bragging Rights</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Teams</span><span
+                                    class="event-detail-value">18 / 32</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">3-man Squad</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+                <div class="event-card" data-game="CS2" data-region="EU" data-squad="Team">
+                    <div class="event-card-banner cs2-banner">
+                        <span class="event-game-tag">CS2</span>
+                        <span class="event-live-badge upcoming"><i class="fas fa-clock"></i> Coming Soon</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>CS2 Amateur Face-Off</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> Next Weekend</span>
+                            <span><i class="fas fa-globe-europe"></i> EU</span>
+                            <span><i class="fas fa-users"></i> Team</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">$500</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Teams</span><span
+                                    class="event-detail-value">8 / 24</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">5v5</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+                <div class="event-card" data-game="Fortnite" data-region="NA" data-squad="Solo">
+                    <div class="event-card-banner fortnite-banner">
+                        <span class="event-game-tag">Fortnite</span>
+                        <span class="event-live-badge"><i class="fas fa-circle"></i> Registrations Open</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>Fortnite Squad Scrims</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> Sunday 4PM</span>
+                            <span><i class="fas fa-globe-americas"></i> NA</span>
+                            <span><i class="fas fa-user"></i> Solo</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">Gift Cards</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Players</span><span
+                                    class="event-detail-value">Open</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">Solo BR</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+                <div class="event-card" data-game="PUBG" data-region="APAC" data-squad="Duo">
+                    <div class="event-card-banner pubg-banner">
+                        <span class="event-game-tag">PUBG</span>
+                        <span class="event-live-badge upcoming"><i class="fas fa-clock"></i> Coming Soon</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>PUBG Casual Survivors</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> Next Month</span>
+                            <span><i class="fas fa-globe-asia"></i> APAC</span>
+                            <span><i class="fas fa-user-friends"></i> Duo</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">Apparel Merch</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Teams</span><span
+                                    class="event-detail-value">16 / 32</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">2-man Duo</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+                <div class="event-card" data-game="League of Legends" data-region="EU" data-squad="Open">
+                    <div class="event-card-banner lol-banner">
+                        <span class="event-game-tag">League of Legends</span>
+                        <span class="event-live-badge"><i class="fas fa-circle"></i> Registrations Open</span>
+                    </div>
+                    <div class="event-card-body">
+                        <h3>LoL ARAM Clash Night</h3>
+                        <div class="event-meta">
+                            <span><i class="fas fa-calendar"></i> This Friday 7PM</span>
+                            <span><i class="fas fa-globe-europe"></i> EU</span>
+                            <span><i class="fas fa-door-open"></i> Open</span>
+                        </div>
+                        <div class="event-details-row">
+                            <div class="event-detail"><span class="event-detail-label">Prize Pool</span><span
+                                    class="event-detail-value prize">RP Points</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Teams</span><span
+                                    class="event-detail-value">Open</span></div>
+                            <div class="event-detail"><span class="event-detail-label">Format</span><span
+                                    class="event-detail-value">Mixed Scrims</span></div>
+                        </div>
+                        <button class="btn-register" onclick="handleRegisterClick(this)">Register Now</button>
+                    </div>
+                </div>
+
+            </div><!-- end events-grid -->
+
+            <p class="events-no-results" id="noResultsMsg" style="display:none;">
+                <i class="fas fa-search"></i> No events match your filters. Try adjusting them.
+            </p>
+
+        </main>
+    </div>
+
+    <!-- Register Event Modal -->
+    <div class="modal-overlay" id="registerModal" onclick="closeRegisterOnOverlay(event)">
+        <div class="modal-box filter-modal-box">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-check" style="color:var(--primary-color);margin-right:0.5rem;"></i>Event Registration</h2>
+                <button class="modal-close-btn" onclick="closeRegisterModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="filter-modal-body" style="padding: 1.5rem; flex-direction: column;">
+                <p style="margin-bottom: 1rem; color: #a0a0a0" id="register-modal-desc">Please select a squad to enter this event.</p>
+                <div id="register-squad-container" class="form-group" style="width: 100%;">
+                    <label>Select Squad</label>
+                    <select id="registerSquadSelect" class="form-control" style="width: 100%; padding: 0.8rem; background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); border-radius: 6px;"></select>
+                </div>
+                <div id="register-language-container" class="form-group" style="width: 100%; display: none;">
+                    <label>Select Preferred Language</label>
+                    <select id="registerLanguageSelect" class="form-control" style="width: 100%; padding: 0.8rem; background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); border-radius: 6px;">
+                        <option value="English">English</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Hindi">Hindi</option>
+                    </select>
+                </div>
+                <p id="register-no-squads-msg" style="color: var(--danger-color); display: none; margin-top: 1rem;">
+                    You do not have a squad that meets the requirements for this event.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeRegisterModal()">CANCEL</button>
+                <button class="modal-btn-create" id="confirmRegisterBtn" onclick="confirmRegister()">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal-overlay" id="filterModal" onclick="closeFilterOnOverlay(event)">
+        <div class="modal-box filter-modal-box">
+            <div class="modal-header">
+                <h2><i class="fas fa-filter" style="color:var(--primary-color);margin-right:0.5rem;"></i>Filter Events
+                </h2>
+                <button class="modal-close-btn" onclick="closeFilterModal()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="filter-modal-body">
+                <!-- Left Sidebar Tabs -->
+                <div class="filter-sidebar">
+                    <button class="filter-tab active" onclick="switchFilterTab('game', this)">
+                        <i class="fas fa-gamepad"></i>
+                        <span>Game</span>
+                    </button>
+                    <button class="filter-tab" onclick="switchFilterTab('region', this)">
+                        <i class="fas fa-globe"></i>
+                        <span>Region</span>
+                    </button>
+                    <button class="filter-tab" onclick="switchFilterTab('squad', this)">
+                        <i class="fas fa-users"></i>
+                        <span>Squad Type</span>
+                    </button>
+                </div>
+
+                <!-- Right Options Panel -->
+                <div class="filter-options-panel">
+
+                    <div class="filter-panel-section active" id="panel-game">
+                        <p class="filter-panel-label">Select Games</p>
+                        <div class="modal-checkboxes">
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game"
+                                    value="Valorant" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Valorant</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game"
+                                    value="Apex Legends" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Apex Legends</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game" value="CS2"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>CS2</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game"
+                                    value="Fortnite" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Fortnite</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game" value="PUBG"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>PUBG</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-game"
+                                    value="League of Legends" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>League of Legends</span></label>
+                        </div>
+                    </div>
+
+                    <div class="filter-panel-section" id="panel-region">
+                        <p class="filter-panel-label">Select Regions</p>
+                        <div class="modal-checkboxes">
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-region" value="NA"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>North
+                                    America</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-region" value="EU"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>Europe</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-region"
+                                    value="APAC" onchange="applyFilters()"><span class="checkmark"></span><span>Asia
+                                    Pacific</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-region" value="SA"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>South
+                                    America</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-region" value="ME"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>Middle
+                                    East</span></label>
+                        </div>
+                    </div>
+
+                    <div class="filter-panel-section" id="panel-squad">
+                        <p class="filter-panel-label">Select Squad Type</p>
+                        <div class="modal-checkboxes">
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-squad"
+                                    value="Solo" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Solo</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-squad" value="Duo"
+                                    onchange="applyFilters()"><span class="checkmark"></span><span>Duo</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-squad"
+                                    value="Team" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Team</span></label>
+                            <label class="custom-checkbox"><input type="checkbox" class="modal-filter-squad"
+                                    value="Open" onchange="applyFilters()"><span
+                                    class="checkmark"></span><span>Open</span></label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="resetFilters()">RESET</button>
+                <button class="modal-btn-create" onclick="closeFilterModal()">APPLY</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        function openFilterModal() {
+            document.getElementById('filterModal').classList.add('active');
+        }
+        function closeFilterModal() {
+            document.getElementById('filterModal').classList.remove('active');
+        }
+        function closeFilterOnOverlay(e) {
+            if (e.target === document.getElementById('filterModal')) closeFilterModal();
+        }
+        function switchFilterTab(type, btn) {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.filter-panel-section').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('panel-' + type).classList.add('active');
+        }
+        function applyFilters() {
+            const games = [...document.querySelectorAll('.modal-filter-game:checked')].map(c => c.value);
+            const regions = [...document.querySelectorAll('.modal-filter-region:checked')].map(c => c.value);
+            const squads = [...document.querySelectorAll('.modal-filter-squad:checked')].map(c => c.value);
+            let visibleCount = 0;
+            document.querySelectorAll('.event-card').forEach(card => {
+                const show =
+                    (games.length === 0 || games.includes(card.dataset.game)) &&
+                    (regions.length === 0 || regions.includes(card.dataset.region)) &&
+                    (squads.length === 0 || squads.includes(card.dataset.squad));
+                card.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            document.getElementById('noResultsMsg').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+        function resetFilters() {
+            document.querySelectorAll('.modal-filter-game, .modal-filter-region, .modal-filter-squad')
+                .forEach(cb => cb.checked = false);
+            applyFilters();
+        }
+
+        // --- Registration Logic ---
+        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
+        let currentUser = null;
+        let currentRegisterBtn = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentUser = AuthService.getCurrentUser();
+            // Assign handlers to remaining untouched buttons (like Solo, Team)
+            document.querySelectorAll('.btn-register').forEach(btn => {
+                if (!btn.onclick) btn.onclick = () => handleRegisterClick(btn);
+            });
+        });
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.remove('active');
+        }
+
+        function closeRegisterOnOverlay(e) {
+            if (e.target === document.getElementById('registerModal')) closeRegisterModal();
+        }
+
+        async function handleRegisterClick(btn) {
+            if (!currentUser) {
+                alert('Please login to register for events.');
+                return;
+            }
+            
+            currentRegisterBtn = btn;
+            const card = btn.closest('.event-card');
+            const squadType = card.dataset.squad;
+
+            if (squadType === 'Solo') {
+                markRegistered(btn);
+                return;
+            }
+
+            document.getElementById('register-no-squads-msg').style.display = 'none';
+            document.getElementById('confirmRegisterBtn').disabled = false;
+
+            if (squadType === 'Open') {
+                document.getElementById('register-modal-desc').textContent = "Join a random team right before the event. Select your preferred communication language.";
+                document.getElementById('register-squad-container').style.display = 'none';
+                document.getElementById('register-language-container').style.display = 'block';
+                document.getElementById('registerModal').classList.add('active');
+            } else {
+                document.getElementById('register-modal-desc').textContent = `Select a ${squadType} squad to enter this event.`;
+                document.getElementById('register-squad-container').style.display = 'block';
+                document.getElementById('register-language-container').style.display = 'none';
+                
+                const select = document.getElementById('registerSquadSelect');
+                select.innerHTML = '<option>Loading squads...</option>';
+                document.getElementById('registerModal').classList.add('active');
+
+                try {
+                    const res = await fetch(`${API}/api/chat/squads/${currentUser.id}`);
+                    const data = await res.json();
+                    let squads = data.squads || [];
+                    
+                    if (squadType === 'Duo') {
+                        squads = squads.filter(s => s.members.length <= 2);
+                    }
+
+                    if (squads.length === 0) {
+                        select.innerHTML = '<option disabled>No valid squads found</option>';
+                        document.getElementById('register-no-squads-msg').style.display = 'block';
+                        document.getElementById('confirmRegisterBtn').disabled = true;
+                    } else {
+                        select.innerHTML = squads.map(s => {
+                            const escN = String(s.name).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                            return `<option value="${s._id}">${escN} (${s.members.length}/${s.maxMembers})</option>`;
+                        }).join('');
+                    }
+                } catch(e) {
+                    select.innerHTML = '<option disabled>Error loading squads</option>';
+                    document.getElementById('confirmRegisterBtn').disabled = true;
+                }
+            }
+        }
+
+        function confirmRegister() {
+            if(currentRegisterBtn) {
+                markRegistered(currentRegisterBtn);
+            }
+            closeRegisterModal();
+        }
+
+        function markRegistered(btn) {
+            btn.style.display = 'none'; // Hide original
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'registered-actions-wrapper';
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '0.5rem';
+            wrapper.style.width = '100%';
+            wrapper.style.marginTop = 'auto';
+
+            wrapper.innerHTML = `
+                <button disabled style="flex: 1; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 0.6rem; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase;">
+                    <i class="fas fa-check"></i> Registered
+                </button>
+                <button class="btn-unregister-drop" style="flex: 1; background: rgba(255, 42, 109, 0.1); color: var(--error-color); border: 1px solid var(--error-color); padding: 0.6rem; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.72rem; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='rgba(255, 42, 109, 0.25)'" 
+                        onmouseout="this.style.background='rgba(255, 42, 109, 0.1)'">
+                    <i class="fas fa-times"></i> Drop
+                </button>
+            `;
+
+            wrapper.querySelector('.btn-unregister-drop').onclick = () => {
+                if(confirm("Are you sure you want to unregister from this event?")) {
+                    wrapper.remove();
+                    btn.style.display = 'block'; // Show original
+                }
+            };
+
+            btn.parentNode.insertBefore(wrapper, btn.nextSibling);
+        }
+    </script>
+</body>
+
+</html>

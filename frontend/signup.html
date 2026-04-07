@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width = device-width, initial-scale = 1.0">
+    <title> Sign Up | Player Matching </title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header glitch-wrapper">
+                <h2> Start your journey </h2>
+                <p> Create your profile to join the squad </p>
+            </div>
+
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label for="username"> USERNAME </label>
+                    <input type="text" id="username" name="username" required placeholder="Create your handle">
+                </div>
+
+                <div class="form-group">
+                    <label for="email"> EMAIL </label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password"> PASSWORD </label>
+                    <input type="password" id="password" name="password" required placeholder="Create your password">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password"> CONFIRM PASSWORD </label>
+                    <input type="password" id="confirm-password" name="confirm-password" required
+                        placeholder="Confirm your password">
+                </div>
+
+                <div id="signup-error" class="error-message"></div>
+                <button type="submit" class="btn-primary"> Register </button>
+            </form>
+
+            <div class="auth-footer">
+                <p> Already have an ID? <a href="login.html"> System Login </a> </p>
+            </div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

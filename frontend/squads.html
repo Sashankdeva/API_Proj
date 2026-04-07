@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Squads | Squad Up</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>SQUAD UP</h2>
+            </div>
+            <div class="sidebar-nav">
+                <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <div class="nav-item-group">
+                    <a href="friends.html" class="nav-item" id="friends-link">
+                        <i class="fas fa-user-friends"></i><span>Friends</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="friends.html#all" class="dropdown-item">All Friends</a>
+                        <a href="friends.html#pending" class="dropdown-item">
+                            Pending Requests
+                            <span class="badge-sm" id="sidebar-pending-badge" style="display:none;"></span>
+                        </a>
+                    </div>
+                </div>
+                <a href="squads.html" class="nav-item active"><i class="fas fa-users"></i><span>My Squads</span></a>
+                <a href="chat.html" class="nav-item"><i class="fas fa-comments"></i><span>Chat</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+            </div>
+            <div class="profile-section">
+                <a href="profile.html" class="nav-item profile-tab">
+                    <div class="avatar" id="sidebar-avatar">
+                        <img src="https://ui-avatars.com/api/?name=?&background=0D8ABC&color=fff" alt="Profile"
+                            id="sidebar-avatar-img">
+                    </div>
+                    <div class="profile-tab-labels">
+                        <span class="profile-tab-title">My Profile</span>
+                        <span class="profile-tab-username" id="sidebar-username"></span>
+                    </div>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content squads-main">
+            <div class="squads-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <h1>My Squads</h1>
+                    <button class="btn-create-squad" onclick="openCreateSquadModal()">
+                        <i class="fas fa-plus"></i> Create Squad
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading state -->
+            <div id="squads-loading" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+                <p style="margin-top:1rem;">Loading squads…</p>
+            </div>
+
+            <div id="squads-empty" class="friends-empty" style="display:none;">
+                <i class="fas fa-users"></i>
+                <p>No squads yet. Create your own squad or find active players to team up with!</p>
+            </div>
+
+            <!-- Squads grid -->
+            <div class="squads-grid" id="squads-grid"></div>
+        </main>
+    </div>
+
+    <!-- ── Create Squad Modal ───────────────────────────── -->
+    <div class="modal-overlay" id="createSquadModal" onclick="if(event.target===this) closeCreateSquadModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2><i class="fas fa-users" style="color:var(--primary-color);margin-right:.5rem;"></i>Create Squad</h2>
+                <button class="modal-close-btn" onclick="closeCreateSquadModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label for="squadName">Squad Name</label>
+                    <input type="text" id="squadName" class="modal-input" placeholder="Name your squad" maxlength="40">
+                </div>
+                <div class="modal-field">
+                    <label for="squadGame">Game</label>
+                    <input type="text" id="squadGame" class="modal-input" placeholder="e.g. Valorant, Apex…"
+                        maxlength="60">
+                </div>
+                <div class="modal-field">
+                    <label for="squadLanguage">Language</label>
+                    <select id="squadLanguage" class="modal-input pf-select">
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Arabic">Arabic</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Russian">Russian</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>Max Members</label>
+                    <div class="member-counter">
+                        <button class="counter-btn counter-minus" onclick="changeMemberCount(-1)"
+                            id="minusBtn">−</button>
+                        <span class="counter-value" id="memberCountDisplay">5</span>
+                        <button class="counter-btn counter-plus" onclick="changeMemberCount(1)" id="plusBtn">+</button>
+                    </div>
+                </div>
+                <div id="createSquadErr" style="color:var(--error-color);font-size:0.85rem;min-height:1em;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeCreateSquadModal()">CANCEL</button>
+                <button class="modal-btn-create" id="createSquadBtn" onclick="createSquad()">CREATE</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
+        let currentUser = null;
+        let memberCount = 5;
+        const MIN_MEMBERS = 2;
+        const MAX_MEMBERS = 15;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = AuthService.getCurrentUser();
+            if (!currentUser) return;
+            changeMemberCount(0);
+            await loadSquads();
+        });
+
+        // ── Load squads from API ──────────────────────────────────
+        async function loadSquads() {
+            document.getElementById('squads-loading').style.display = '';
+            document.getElementById('squads-empty').style.display = 'none';
+            document.getElementById('squads-grid').innerHTML = '';
+
+            try {
+                const res = await fetch(`${API}/api/chat/squads/${currentUser.id}`);
+                const data = await res.json();
+                document.getElementById('squads-loading').style.display = 'none';
+                renderSquads(data.squads || []);
+            } catch {
+                document.getElementById('squads-loading').style.display = 'none';
+                renderSquads([]);
+            }
+        }
+
+        function renderSquads(squads) {
+            const grid = document.getElementById('squads-grid');
+            const empty = document.getElementById('squads-empty');
+
+            if (!squads.length) { empty.style.display = 'flex'; return; }
+            empty.style.display = 'none';
+
+            squads.forEach(s => {
+                const memberCount = Array.isArray(s.members) ? s.members.length : 0;
+                const isOwner = s.createdBy && (s.createdBy._id || s.createdBy).toString() === currentUser.id;
+                const memberAvatars = (s.members || []).slice(0, 4).map(m => {
+                    const name = typeof m === 'object' ? (m.displayName || m.username || '?') : '?';
+                    const url = (typeof m === 'object' && m.avatarUrl) ? m.avatarUrl :
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0].toUpperCase())}&background=141419&color=00f3ff&size=32`;
+                    return `<img src="${escHtml(url)}" alt="${escHtml(name)}" class="squad-member-avatar">`;
+                }).join('') + (memberCount > 4 ? `<div class="squad-member-more">+${memberCount - 4}</div>` : '');
+
+                const card = document.createElement('div');
+                card.className = 'squad-card';
+                card.innerHTML = `
+                    <div class="squad-card-header">
+                        <h3>${escHtml(s.name)}</h3>
+                        <span class="squad-game-tag">${escHtml(s.game)}</span>
+                    </div>
+                    <div class="squad-card-body">
+                        <p class="squad-members-count">
+                            <i class="fas fa-users"></i> ${memberCount}/${s.maxMembers} Members
+                            &nbsp;·&nbsp;<i class="fas fa-globe"></i> ${escHtml(s.language)}
+                        </p>
+                        <div class="squad-members-avatars">${memberAvatars}</div>
+                    </div>
+                    <div class="squad-card-actions">
+                        <button class="btn-chat" title="Squad Chat" onclick="goToChat('squad','${escHtml(s.name)}','${s._id}')">
+                            <i class="fas fa-comments"></i> Chat
+                        </button>
+                        <button class="btn-danger-action" title="${isOwner ? 'Delete Squad' : 'Leave Squad'}"
+                            onclick="${isOwner
+                        ? `deleteSquad('${s._id}',this.closest('.squad-card'))`
+                        : `leaveSquad('${s._id}',this.closest('.squad-card'))`}">
+                            <i class="fas fa-${isOwner ? 'trash-alt' : 'sign-out-alt'}"></i>
+                            ${isOwner ? 'Delete' : 'Leave'}
+                        </button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Create Squad ──────────────────────────────────────────
+        function openCreateSquadModal() { document.getElementById('createSquadModal').classList.add('active'); }
+        function closeCreateSquadModal() { document.getElementById('createSquadModal').classList.remove('active'); }
+
+        function changeMemberCount(delta) {
+            memberCount = Math.min(MAX_MEMBERS, Math.max(MIN_MEMBERS, memberCount + delta));
+            document.getElementById('memberCountDisplay').textContent = memberCount;
+            document.getElementById('minusBtn').disabled = memberCount <= MIN_MEMBERS;
+            document.getElementById('plusBtn').disabled = memberCount >= MAX_MEMBERS;
+        }
+
+        async function createSquad() {
+            const name = document.getElementById('squadName').value.trim();
+            const game = document.getElementById('squadGame').value.trim();
+            const lang = document.getElementById('squadLanguage').value;
+            const errEl = document.getElementById('createSquadErr');
+            const btn = document.getElementById('createSquadBtn');
+
+            if (!name || !game) { errEl.textContent = 'Squad name and game are required.'; return; }
+            errEl.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Creating…';
+
+            try {
+                const res = await fetch(`${API}/api/chat/squads`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, game, language: lang, maxMembers: memberCount, createdBy: currentUser.id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    closeCreateSquadModal();
+                    document.getElementById('squadName').value = '';
+                    document.getElementById('squadGame').value = '';
+                    await loadSquads();
+                } else {
+                    errEl.textContent = data.error || 'Error creating squad.';
+                }
+            } catch {
+                errEl.textContent = 'Could not reach server.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'CREATE';
+            }
+        }
+
+        // ── Leave / Delete Squad ──────────────────────────────────
+        async function leaveSquad(squadId, card) {
+            if (!confirm('Leave this squad?')) return;
+            try {
+                await fetch(`${API}/api/chat/squads/${squadId}`, {
+                    method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+                card.remove();
+                if (!document.getElementById('squads-grid').children.length) {
+                    document.getElementById('squads-empty').style.display = 'flex';
+                }
+            } catch (e) { console.error('leaveSquad:', e); }
+        }
+
+        async function deleteSquad(squadId, card) {
+            if (!confirm('Delete this squad? This cannot be undone.')) return;
+            await leaveSquad(squadId, card); // same endpoint, server checks ownership
+        }
+
+        // ── Go to chat ────────────────────────────────────────────
+        function goToChat(type, target, squadId) {
+            sessionStorage.setItem('chat_open', JSON.stringify({ type, target, squadId }));
+            window.location.href = 'chat.html';
+        }
+
+        function escHtml(str) {
+            return String(str).replace(/[&<>"']/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+    </script>
+</body>
+
+</html>
