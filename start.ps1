@@ -1,6 +1,10 @@
 # SquadUp — Start Server Script
 # Run this every time you open the project.
-# It kills any old process on port 5500 and starts fresh.
+# It kills any old process on port 5500 and starts the Spring Boot app fresh.
+#   .\start.ps1            -> embedded H2 database (no setup needed)
+#   .\start.ps1 mysql      -> MySQL (see src/main/resources/application-mysql.properties)
+
+param([string]$DbProfile = "")
 
 Write-Host "Checking for processes on port 5500..." -ForegroundColor Cyan
 
@@ -9,13 +13,17 @@ $connections = netstat -ano | Select-String ":$port\s+.*LISTENING"
 
 foreach ($line in $connections) {
     $parts = $line -split '\s+' | Where-Object { $_ -ne '' }
-    $pid = $parts[-1]
-    if ($pid -match '^\d+$' -and $pid -ne '0') {
-        Write-Host "Killing process $pid on port $port..." -ForegroundColor Yellow
-        taskkill /PID $pid /F 2>$null
+    $procId = $parts[-1]
+    if ($procId -match '^\d+$' -and $procId -ne '0') {
+        Write-Host "Killing process $procId on port $port..." -ForegroundColor Yellow
+        taskkill /PID $procId /F 2>$null
     }
 }
 
 Write-Host ""
-Write-Host "Starting SquadUp server..." -ForegroundColor Green
-node server.js
+Write-Host "Starting SquadUp (Spring Boot) on http://localhost:$port ..." -ForegroundColor Green
+if ($DbProfile) {
+    .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=$DbProfile"
+} else {
+    .\mvnw.cmd spring-boot:run
+}

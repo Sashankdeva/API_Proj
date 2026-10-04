@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Contract of the SquadUp SOAP player directory. Spring WS generates the WSDL from this
+    schema at http://localhost:5500/soap/players.wsdl
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://squadup.com/soap/players"
+           targetNamespace="http://squadup.com/soap/players"
+           elementFormDefault="qualified">
+
+    <!-- Operation: getPlayer -->
+    <xs:element name="getPlayerRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="username" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getPlayerResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="player" type="tns:player"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Operation: searchPlayers -->
+    <xs:element name="searchPlayersRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="query" type="xs:string"/>
+                <xs:element name="maxResults" type="xs:int" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="searchPlayersResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="totalMatches" type="xs:long"/>
+                <xs:element name="player" type="tns:playerSummary" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Types. E-mail addresses are never exposed through this public service. -->
+    <xs:complexType name="player">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="username" type="xs:string"/>
+            <xs:element name="displayName" type="xs:string"/>
+            <xs:element name="bio" type="xs:string"/>
+            <xs:element name="region" type="xs:string"/>
+            <xs:element name="language" type="xs:string"/>
+            <xs:element name="favoriteGame" type="xs:string"/>
+            <xs:element name="skillLevel" type="xs:string"/>
+            <xs:element name="playStyle" type="xs:string"/>
+            <xs:element name="gameTag" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="platform" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="memberSince" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="playerSummary">
+        <xs:sequence>
+            <xs:element name="id" type="xs:long"/>
+            <xs:element name="username" type="xs:string"/>
+            <xs:element name="displayName" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

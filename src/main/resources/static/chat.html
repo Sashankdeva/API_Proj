@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat | Squad Up</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.3.0/bundles/stomp.umd.min.js"></script>
+    <script src="realtime.js"></script>
+    <style>
+        /* ─── Layout ─────────────────────────────────────────────── */
+        .chat-main {
+            display: flex;
+            height: 100%;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* ─── Left Panel ─────────────────────────────────────────── */
+        .chat-left {
+            width: 25%;
+            max-width: 280px;
+            min-width: 220px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            background: rgba(10, 10, 14, 0.8);
+        }
+
+        /* Tabs: My Friends / My Squads */
+        .chat-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-tab-btn {
+            flex: 1;
+            padding: 0.9rem 0.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: color 0.2s, border-color 0.2s;
+            border-bottom: 3px solid transparent;
+            text-transform: uppercase;
+        }
+
+        .chat-tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+        }
+
+        /* Search / Add Friend bar */
+        .chat-left-header {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chat-search-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chat-search-input {
+            flex: 1;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .chat-search-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn-add-friend {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add-friend:hover {
+            background: rgba(0, 243, 255, 0.3);
+        }
+
+        .btn-create-squad-sm {
+            width: 100%;
+            padding: 0.55rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, rgba(189, 0, 255, 0.2), rgba(0, 243, 255, 0.1));
+            border: 1px solid rgba(189, 0, 255, 0.4);
+            color: var(--primary-color);
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-top: 0.6rem;
+            transition: all 0.2s;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-create-squad-sm:hover {
+            background: rgba(189, 0, 255, 0.3);
+        }
+
+        /* Pending requests header */
+        .pending-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1rem 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .pending-badge {
+            background: var(--error-color);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 999px;
+        }
+
+        /* Contact / Squad list */
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+        }
+
+        .contact-item:hover {
+            background: rgba(0, 243, 255, 0.06);
+        }
+
+        .contact-item.active {
+            background: rgba(0, 243, 255, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--secondary-color);
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+
+        .contact-avatar.squad-av {
+            border-color: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .contact-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .contact-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-unread {
+            background: var(--primary-color);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 2px 6px;
+        }
+
+        /* Pending request card */
+        .pending-card {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pending-card .contact-info {
+            flex: 1;
+        }
+
+        .pending-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .btn-accept-sm,
+        .btn-reject-sm {
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-accept-sm {
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--primary-color);
+        }
+
+        .btn-accept-sm:hover {
+            background: rgba(0, 243, 255, 0.35);
+        }
+
+        .btn-reject-sm {
+            background: rgba(255, 42, 109, 0.15);
+            color: var(--error-color);
+        }
+
+        .btn-reject-sm:hover {
+            background: rgba(255, 42, 109, 0.35);
+        }
+
+        /* Empty state */
+        .chat-empty-list {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .chat-empty-list i {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            opacity: 0.3;
+        }
+
+        /* ─── Right Panel: Chat Window ───────────────────────────── */
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+        }
+
+        /* No chat selected */
+        .chat-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        .chat-placeholder i {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            opacity: 0.2;
+        }
+
+        .chat-placeholder p {
+            font-size: 1rem;
+        }
+
+        /* Chat header */
+        .chat-win-header {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.9rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(10, 10, 14, 0.8);
+        }
+
+        .chat-win-header img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .chat-win-header img.squad-hd {
+            border-radius: 8px;
+            border-color: var(--primary-color);
+        }
+
+        .chat-win-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        .chat-win-sub {
+            font-size: 0.75rem;
+            color: #3cff8f;
+        }
+
+        .typing-indicator {
+            font-size: 0.72rem;
+            color: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+            min-height: 1em;
+        }
+
+        .typing-indicator.show {
+            opacity: 1;
+        }
+
+        /* Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.2rem 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .msg-row.mine {
+            flex-direction: row-reverse;
+        }
+
+        .msg-avatar-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .msg-col {
+            display: flex;
+            flex-direction: column;
+            max-width: 65%;
+        }
+
+        .msg-row.mine .msg-col {
+            align-items: flex-end;
+        }
+
+        .msg-sender {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 2px;
+            padding: 0 4px;
+        }
+
+        .msg-bubble {
+            padding: 0.6rem 1rem;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .msg-row:not(.mine) .msg-bubble {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-row.mine .msg-bubble {
+            background: linear-gradient(135deg, var(--primary-color), #0090a8);
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            padding: 0 4px;
+        }
+
+        /* Date divider */
+        .date-divider {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .date-divider::before,
+        .date-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .date-divider::before {
+            left: 0;
+        }
+
+        .date-divider::after {
+            right: 0;
+        }
+
+        /* Input bar */
+        .chat-input-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.8rem 1.4rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(10, 10, 14, 0.8);
+        }
+
+        .chat-text-input {
+            flex: 1;
+            padding: 0.65rem 1rem;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-text-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .chat-send-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--primary-color), #0090a8);
+            color: #000;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.12);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+        }
+
+        /* ─── Create Squad Modal ─────────────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- ── Sidebar ──────────────────────────────────────────────── -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>SQUAD UP</h2>
+            </div>
+            <div class="sidebar-nav">
+                <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+                <div class="nav-item-group">
+                    <a href="friends.html" class="nav-item" id="friends-link">
+                        <i class="fas fa-user-friends"></i><span>Friends</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="friends.html#all" class="dropdown-item">All Friends</a>
+                        <a href="friends.html#pending" class="dropdown-item">
+                            Pending Requests
+                            <span class="badge-sm" id="sidebar-pending-badge" style="display:none;"></span>
+                        </a>
+                    </div>
+                </div>
+                <a href="squads.html" class="nav-item"><i class="fas fa-users"></i><span>My Squads</span></a>
+                <a href="chat.html" class="nav-item active"><i class="fas fa-comments"></i><span>Chat</span></a>
+                <a href="events.html" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+            </div>
+            <div class="profile-section">
+                <a href="profile.html" class="nav-item profile-tab">
+                    <div class="avatar"><img src="https://ui-avatars.com/api/?name=?&background=0D8ABC&color=fff"
+                            alt="Profile" id="sidebar-avatar-img"></div>
+                    <div class="profile-tab-labels">
+                        <span class="profile-tab-title">My Profile</span>
+                        <span class="profile-tab-username" id="sidebar-username"></span>
+                    </div>
+                </a>
+            </div>
+        </nav>
+
+        <!-- ── Main ─────────────────────────────────────────────────── -->
+        <main class="main-content chat-main">
+
+            <!-- Left Panel -->
+            <div class="chat-left">
+                <!-- Tabs -->
+                <div class="chat-tabs">
+                    <button class="chat-tab-btn active" id="tab-friends" onclick="switchTab('friends')">
+                        <i class="fas fa-user-friends"></i> My Friends
+                    </button>
+                    <button class="chat-tab-btn" id="tab-squads" onclick="switchTab('squads')">
+                        <i class="fas fa-users"></i> My Squads
+                    </button>
+                </div>
+
+                <!-- ── Friends Panel ─────────────────────────────── -->
+                <div id="panel-friends" data-panel="friends">
+                    <!-- Friends list -->
+                    <div class="contact-list" id="friendsList">
+                        <div class="chat-empty-list" id="friendsEmpty">
+                            <i class="fas fa-user-friends"></i>
+                            <span>No friends yet. Head to the Friends page to add someone!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Squads Panel ──────────────────────────────── -->
+                <div id="panel-squads" data-panel="squads" style="display:none;">
+                    <div class="contact-list" id="squadsList">
+                        <div class="chat-empty-list" id="squadsEmpty">
+                            <i class="fas fa-users"></i>
+                            <span>No squads yet. Join or create one on the Squads page!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Chat Window -->
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-placeholder" id="chatPlaceholder">
+                    <i class="fas fa-comments"></i>
+                    <p>Select a friend or squad to start chatting</p>
+                </div>
+
+                <!-- Active chat (hidden until a room is selected) -->
+                <div id="chatActive" style="display:none; flex:1; flex-direction:column;">
+                    <div class="chat-win-header">
+                        <img src="" alt="" id="chatPartnerImg">
+                        <div>
+                            <div class="chat-win-name" id="chatPartnerName"></div>
+                            <div class="chat-win-sub" id="chatPartnerSub">● Online</div>
+                        </div>
+                        <div style="margin-left:auto; font-size:0.72rem;">
+                            <span class="typing-indicator" id="typingIndicator"></span>
+                        </div>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages"></div>
+
+                    <div class="chat-input-bar">
+                        <input type="text" id="chatInput" class="chat-text-input" placeholder="Type a message…"
+                            onkeydown="handleInputKey(event)" oninput="handleTyping()">
+                        <button class="chat-send-btn" onclick="sendMessage()" title="Send">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- ── Scripts ────────────────────────────────────────────────── -->
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+    <script>
+        /* ════════════════════════════════════════════════════════════
+           CHAT PAGE — WebSocket (STOMP) + REST
+           ════════════════════════════════════════════════════════════ */
+
+        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
+        let socket;
+        let currentUser = null;   // { id, username }
+        let currentRoomId = null;
+        let currentType = null;   // 'dm' | 'group'
+        let typingTimer = null;
+        let sqMemberCount = 5;
+
+        // ── Init ──────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = JSON.parse(sessionStorage.getItem('squadup_user') || 'null');
+            if (!currentUser) return;   // auth guard in script.js handles redirect
+
+            connectSocket();
+
+            // Read redirect target from friends/squads page (if any)
+            const chatOpenRaw = sessionStorage.getItem('chat_open');
+            const chatOpen = chatOpenRaw ? JSON.parse(chatOpenRaw) : null;
+            if (chatOpen) sessionStorage.removeItem('chat_open'); // consume immediately
+
+            // Load lists and capture the data
+            const [friendsData, squadsData] = await Promise.all([loadFriends(), loadSquads()]);
+
+            // Auto-open the requested conversation
+            if (chatOpen) {
+                if (chatOpen.type === 'friend') {
+                    switchTab('friends');
+                    const target = chatOpen.target.replace(/^@/, '').toLowerCase();
+
+                    const friend = friendsData.find(f => f.username.toLowerCase() === target);
+                    
+                    // Highlight the item if it exists
+                    let foundItem = null;
+                    const friendItems = document.querySelectorAll('#friendsList .contact-item');
+                    for (const item of friendItems) {
+                        const sub = item.querySelector('.contact-sub');
+                        if (sub && sub.textContent.trim().replace('@', '').toLowerCase() === target) {
+                            foundItem = item;
+                            break;
+                        }
+                    }
+
+                    if (friend) {
+                        const displayName = friend.displayName || friend.username;
+                        const char = displayName ? displayName[0].toUpperCase() : '?';
+                        const color = randomColor(friend.username);
+                        const img = friend.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=${color}&size=80`;
+                        openRoom(friend.roomId, 'dm', displayName, img, '● Online', foundItem);
+                    } else {
+                        // Fallback: open the DM room directly using username-based room ID
+                        const fallTarget = target || 'user';
+                        const color = randomColor(fallTarget);
+                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallTarget[0].toUpperCase())}&background=141419&color=${color}&size=80`;
+                        const roomId = 'dm_' + [currentUser.username.toLowerCase(), fallTarget].sort().join('_');
+                        openRoom(roomId, 'dm', fallTarget, img, '● Online', foundItem);
+                    }
+
+                } else if (chatOpen.type === 'squad') {
+                    switchTab('squads');
+                    const target = chatOpen.target;
+
+                    const squad = squadsData.find(s => s.name.toLowerCase() === target.toLowerCase());
+
+                    let foundItem = null;
+                    const squadItems = document.querySelectorAll('#squadsList .contact-item');
+                    for (const item of squadItems) {
+                        const name = item.querySelector('.contact-name');
+                        if (name && name.textContent.trim().toLowerCase() === target.toLowerCase()) {
+                            foundItem = item;
+                            break;
+                        }
+                    }
+
+                    if (squad) {
+                        const memberCount = Array.isArray(squad.members) ? squad.members.length : 0;
+                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(squad.name.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
+                        const roomId = 'squad_' + squad.id;
+                        openRoom(roomId, 'group', squad.name, img, `${squad.game} · ${memberCount} members`, foundItem);
+                    } else {
+                        // Fallback: use the squadId to build the room directly
+                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(target.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
+                        const roomId = chatOpen.squadId
+                            ? 'squad_' + chatOpen.squadId
+                            : 'squad_' + target.toLowerCase().replace(/\s+/g, '_');
+                        openRoom(roomId, 'group', target, img, 'Squad Group Chat', foundItem);
+                    }
+                }
+            }
+        });
+
+        // ── WebSocket (see realtime.js) ───────────────────────────────
+        function connectSocket() {
+            socket = SquadSocket.connect();
+
+            socket.on('connect', () => console.log('🔌 Socket connected'));
+            socket.on('disconnect', () => console.log('🔌 Socket disconnected'));
+
+            socket.on('room-history', (messages) => {
+                const box = document.getElementById('chatMessages');
+                box.innerHTML = '';
+                messages.forEach(m => appendMessage(m, false));
+                box.scrollTop = box.scrollHeight;
+            });
+
+            socket.on('receive-message', (msg) => {
+                if (msg.roomId !== currentRoomId) return;
+                appendMessage(msg, true);
+            });
+
+            socket.on('user-typing', ({ username }) => {
+                if (username === currentUser.username) return;
+                const el = document.getElementById('typingIndicator');
+                el.textContent = `${username} is typing…`;
+                el.classList.add('show');
+            });
+
+            socket.on('user-stop-typing', () => {
+                const el = document.getElementById('typingIndicator');
+                el.textContent = '';
+                el.classList.remove('show');
+            });
+        }
+
+        // ── Join / open a room ─────────────────────────────────────────
+        function openRoom(roomId, type, partnerName, partnerImg, partnerSub, itemEl) {
+            // Leave current room
+            if (currentRoomId && socket) socket.emit('leave-room', { roomId: currentRoomId });
+
+            currentRoomId = roomId;
+            currentType = type;
+
+            // Highlight active contact
+            document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
+            if (itemEl) itemEl.classList.add('active');
+
+            // Update header
+            const img = document.getElementById('chatPartnerImg');
+            img.src = partnerImg;
+            img.className = type === 'group' ? 'squad-hd' : '';
+            document.getElementById('chatPartnerName').textContent = partnerName;
+            document.getElementById('chatPartnerSub').textContent = partnerSub;
+            document.getElementById('chatMessages').innerHTML = '';
+
+            // Show active panel
+            document.getElementById('chatPlaceholder').style.display = 'none';
+            const active = document.getElementById('chatActive');
+            active.style.display = 'flex';
+
+            // Join socket room (server sends history)
+            if (socket) socket.emit('join-room', { roomId });
+        }
+
+        // ── Send Message ──────────────────────────────────────────────
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentRoomId) return;
+            // The server takes the sender from the authenticated WebSocket session.
+            socket.emit('send-message', { roomId: currentRoomId, text });
+            input.value = '';
+            if (socket) socket.emit('stop-typing', { roomId: currentRoomId });
+        }
+
+        function handleInputKey(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function handleTyping() {
+            if (!currentRoomId || !socket) return;
+            socket.emit('typing', { roomId: currentRoomId, username: currentUser.username });
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                socket.emit('stop-typing', { roomId: currentRoomId });
+            }, 1500);
+        }
+
+        // ── Render a message bubble ────────────────────────────────────
+        function appendMessage(msg, scroll) {
+            const box = document.getElementById('chatMessages');
+            const isMe = msg.senderId === currentUser.id;
+            const displayName = msg.senderDisplayName || msg.senderUsername || '?';
+            const avatarUrl = msg.avatarUrl ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName[0].toUpperCase())}&background=${isMe ? '0D8ABC' : '141419'}&color=${isMe ? 'fff' : '00f3ff'}&size=56`;
+            const time = new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+            const row = document.createElement('div');
+            row.className = `msg-row${isMe ? ' mine' : ''}`;
+            row.innerHTML = `
+        <img src="${avatarUrl}" class="msg-avatar-sm" alt="${escHtml(displayName)}">
+        <div class="msg-col">
+            ${(!isMe && currentType === 'group') ? `<div class="msg-sender">${escHtml(displayName)}</div>` : ''}
+            <div class="msg-bubble">${escHtml(msg.text)}</div>
+            <div class="msg-time">${time}</div>
+        </div>`;
+            box.appendChild(row);
+            if (scroll) box.scrollTop = box.scrollHeight;
+        }
+
+        // ── Tabs ──────────────────────────────────────────────────────
+        function switchTab(tab) {
+            // Hide ALL registered panels, then show only the target.
+            // Using data-panel attribute means any future panels added to the HTML
+            // are automatically managed — nothing can accidentally appear outside.
+            document.querySelectorAll('.chat-left [data-panel]').forEach(panel => {
+                panel.style.display = panel.dataset.panel === tab ? '' : 'none';
+            });
+            // Update tab button active states
+            document.querySelectorAll('.chat-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.id === 'tab-' + tab);
+            });
+        }
+
+        // ── Load Friends ──────────────────────────────────────────────
+        async function loadFriends() {
+            if (!currentUser) return [];
+            try {
+                const res = await fetch(`${API}/api/v1/friends/${currentUser.id}`);
+                const data = await res.json();
+                renderFriends(data.friends || []);
+                return data.friends || [];
+            } catch (e) {
+                console.error('loadFriends:', e);
+                return [];
+            }
+        }
+
+        function renderFriends(friends) {
+            const list = document.getElementById('friendsList');
+            const empty = document.getElementById('friendsEmpty');
+            
+            const validFriends = friends.filter(f => f && f.username);
+            if (!validFriends.length) { empty.style.display = ''; return; }
+            empty.style.display = 'none';
+
+            list.querySelectorAll('.contact-item').forEach(el => el.remove());
+
+            validFriends.forEach(f => {
+                const color = randomColor(f.username);
+                const displayName = f.displayName || f.username;
+                const char = displayName ? displayName[0].toUpperCase() : '?';
+                const img = f.avatarUrl ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=${color}&size=80`;
+                const item = document.createElement('div');
+                item.className = 'contact-item';
+                item.innerHTML = `
+            <img src="${img}" class="contact-avatar" alt="${escHtml(displayName)}">
+            <div class="contact-info">
+                <div class="contact-name">${escHtml(displayName)}</div>
+                <div class="contact-sub">@${escHtml(f.username)}</div>
+            </div>`;
+                item.onclick = () => openRoom(f.roomId, 'dm', displayName, img, '● Online', item);
+                list.appendChild(item);
+            });
+        }
+
+
+
+        // ── Load Squads ───────────────────────────────────────────────
+        async function loadSquads() {
+            if (!currentUser) return [];
+            try {
+                const res = await fetch(`${API}/api/v1/squads/user/${currentUser.id}`);
+                const data = await res.json();
+                renderSquads(data.squads || []);
+                return data.squads || [];
+            } catch (e) {
+                console.error('loadSquads:', e);
+                return [];
+            }
+        }
+
+        function renderSquads(squads) {
+            const list = document.getElementById('squadsList');
+            const empty = document.getElementById('squadsEmpty');
+            if (!squads.length) { empty.style.display = ''; return; }
+            empty.style.display = 'none';
+            list.querySelectorAll('.contact-item').forEach(el => el.remove());
+
+            squads.forEach(s => {
+                const roomId = 'squad_' + s.id;
+                const memberCount = Array.isArray(s.members) ? s.members.length : 0;
+                const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
+                const item = document.createElement('div');
+                item.className = 'contact-item';
+                item.innerHTML = `
+            <img src="${img}" class="contact-avatar squad-av" alt="${escHtml(s.name)}">
+            <div class="contact-info">
+                <div class="contact-name">${escHtml(s.name)}</div>
+                <div class="contact-sub">${escHtml(s.game)} · ${memberCount} members</div>
+            </div>`;
+                item.onclick = () => openRoom(roomId, 'group', s.name, img, `${s.game} · ${memberCount} members`, item);
+                list.appendChild(item);
+            });
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        const COLORS = ['00f3ff', 'bd00ff', 'ff9900', '3cff8f', 'ff4655', 'ff2a6d', 'ffaa00'];
+        function randomColor(seed) {
+            let h = 0;
+            for (let i = 0; i < seed.length; i++) h = seed.charCodeAt(i) + ((h << 5) - h);
+            return COLORS[Math.abs(h) % COLORS.length];
+        }
+    </script>
+</body>
+
+</html>

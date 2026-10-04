@@ -1,0 +1,62 @@
+package com.squadup.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/** Request bodies for /api/v1/auth. Passwords are masked in toString() so they never reach the logs. */
+public final class AuthDtos {
+
+    private AuthDtos() {
+    }
+
+    public record RegisterRequest(
+            @NotBlank(message = "All fields are required.")
+            @Size(min = 3, message = "Username must be at least 3 characters.")
+            @Size(max = 30, message = "Username must be at most 30 characters.")
+            String username,
+
+            @NotBlank(message = "All fields are required.")
+            @Email(message = "Please enter a valid email address.")
+            @Size(max = 120, message = "Email is too long.")
+            String email,
+
+            @NotBlank(message = "All fields are required.")
+            @Size(min = 6, message = "Password must be at least 6 characters.")
+            @Size(max = 72, message = "Password must be at most 72 characters.")
+            String password) {
+
+        @Override
+        public String toString() {
+            return "RegisterRequest[username=" + username + ", email=" + email + ", password=***]";
+        }
+    }
+
+    /** {@code username} may also be the account e-mail. */
+    public record LoginRequest(
+            @NotBlank(message = "Username and password are required.") String username,
+            @NotBlank(message = "Username and password are required.") String password) {
+
+        @Override
+        public String toString() {
+            return "LoginRequest[username=" + username + ", password=***]";
+        }
+    }
+
+    public record ChangePasswordRequest(
+            @NotBlank(message = "Both current and new passwords are required.") String currentPassword,
+
+            @NotBlank(message = "Both current and new passwords are required.")
+            @Size(min = 6, message = "New password must be at least 6 characters.")
+            @Size(max = 72, message = "New password must be at most 72 characters.")
+            String newPassword) {
+
+        @Override
+        public String toString() {
+            return "ChangePasswordRequest[***]";
+        }
+    }
+
+    public record LoginResponse(boolean success, String token, UserDto user) {
+    }
+}
