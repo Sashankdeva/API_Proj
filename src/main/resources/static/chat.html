@@ -639,13 +639,11 @@
            CHAT PAGE — WebSocket (STOMP) + REST
            ════════════════════════════════════════════════════════════ */
 
-        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
         let socket;
         let currentUser = null;   // { id, username }
         let currentRoomId = null;
         let currentType = null;   // 'dm' | 'group'
         let typingTimer = null;
-        let sqMemberCount = 5;
 
         // ── Init ──────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
@@ -659,73 +657,16 @@
             const chatOpen = chatOpenRaw ? JSON.parse(chatOpenRaw) : null;
             if (chatOpen) sessionStorage.removeItem('chat_open'); // consume immediately
 
-            // Load lists and capture the data
-            const [friendsData, squadsData] = await Promise.all([loadFriends(), loadSquads()]);
+            await Promise.all([loadFriends(), loadSquads()]);
 
-            // Auto-open the requested conversation
+            // Auto-open the conversation requested by the friends / squads page
             if (chatOpen) {
-                if (chatOpen.type === 'friend') {
-                    switchTab('friends');
-                    const target = chatOpen.target.replace(/^@/, '').toLowerCase();
-
-                    const friend = friendsData.find(f => f.username.toLowerCase() === target);
-                    
-                    // Highlight the item if it exists
-                    let foundItem = null;
-                    const friendItems = document.querySelectorAll('#friendsList .contact-item');
-                    for (const item of friendItems) {
-                        const sub = item.querySelector('.contact-sub');
-                        if (sub && sub.textContent.trim().replace('@', '').toLowerCase() === target) {
-                            foundItem = item;
-                            break;
-                        }
-                    }
-
-                    if (friend) {
-                        const displayName = friend.displayName || friend.username;
-                        const char = displayName ? displayName[0].toUpperCase() : '?';
-                        const color = randomColor(friend.username);
-                        const img = friend.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=${color}&size=80`;
-                        openRoom(friend.roomId, 'dm', displayName, img, '● Online', foundItem);
-                    } else {
-                        // Fallback: open the DM room directly using username-based room ID
-                        const fallTarget = target || 'user';
-                        const color = randomColor(fallTarget);
-                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(fallTarget[0].toUpperCase())}&background=141419&color=${color}&size=80`;
-                        const roomId = 'dm_' + [currentUser.username.toLowerCase(), fallTarget].sort().join('_');
-                        openRoom(roomId, 'dm', fallTarget, img, '● Online', foundItem);
-                    }
-
-                } else if (chatOpen.type === 'squad') {
-                    switchTab('squads');
-                    const target = chatOpen.target;
-
-                    const squad = squadsData.find(s => s.name.toLowerCase() === target.toLowerCase());
-
-                    let foundItem = null;
-                    const squadItems = document.querySelectorAll('#squadsList .contact-item');
-                    for (const item of squadItems) {
-                        const name = item.querySelector('.contact-name');
-                        if (name && name.textContent.trim().toLowerCase() === target.toLowerCase()) {
-                            foundItem = item;
-                            break;
-                        }
-                    }
-
-                    if (squad) {
-                        const memberCount = Array.isArray(squad.members) ? squad.members.length : 0;
-                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(squad.name.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
-                        const roomId = 'squad_' + squad.id;
-                        openRoom(roomId, 'group', squad.name, img, `${squad.game} · ${memberCount} members`, foundItem);
-                    } else {
-                        // Fallback: use the squadId to build the room directly
-                        const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(target.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
-                        const roomId = chatOpen.squadId
-                            ? 'squad_' + chatOpen.squadId
-                            : 'squad_' + target.toLowerCase().replace(/\s+/g, '_');
-                        openRoom(roomId, 'group', target, img, 'Squad Group Chat', foundItem);
-                    }
-                }
+                const isSquad = chatOpen.type === 'squad';
+                switchTab(isSquad ? 'squads' : 'friends');
+                const item = isSquad
+                    ? document.querySelector(`#squadsList .contact-item[data-squad-id="${CSS.escape(String(chatOpen.squadId))}"]`)
+                    : document.querySelector(`#friendsList .contact-item[data-username="${CSS.escape(chatOpen.target.replace(/^@/, '').toLowerCase())}"]`);
+                if (item) item.click();
             }
         });
 
@@ -827,7 +768,7 @@
             const row = document.createElement('div');
             row.className = `msg-row${isMe ? ' mine' : ''}`;
             row.innerHTML = `
-        <img src="${avatarUrl}" class="msg-avatar-sm" alt="${escHtml(displayName)}">
+        <img src="${escHtml(avatarUrl)}" class="msg-avatar-sm" alt="${escHtml(displayName)}">
         <div class="msg-col">
             ${(!isMe && currentType === 'group') ? `<div class="msg-sender">${escHtml(displayName)}</div>` : ''}
             <div class="msg-bubble">${escHtml(msg.text)}</div>
@@ -855,7 +796,7 @@
         async function loadFriends() {
             if (!currentUser) return [];
             try {
-                const res = await fetch(`${API}/api/v1/friends/${currentUser.id}`);
+                const res = await fetch(`${API_BASE}/api/v1/friends/${currentUser.id}`);
                 const data = await res.json();
                 renderFriends(data.friends || []);
                 return data.friends || [];
@@ -883,8 +824,9 @@
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(char)}&background=141419&color=${color}&size=80`;
                 const item = document.createElement('div');
                 item.className = 'contact-item';
+                item.dataset.username = f.username.toLowerCase();
                 item.innerHTML = `
-            <img src="${img}" class="contact-avatar" alt="${escHtml(displayName)}">
+            <img src="${escHtml(img)}" class="contact-avatar" alt="${escHtml(displayName)}">
             <div class="contact-info">
                 <div class="contact-name">${escHtml(displayName)}</div>
                 <div class="contact-sub">@${escHtml(f.username)}</div>
@@ -900,7 +842,7 @@
         async function loadSquads() {
             if (!currentUser) return [];
             try {
-                const res = await fetch(`${API}/api/v1/squads/user/${currentUser.id}`);
+                const res = await fetch(`${API_BASE}/api/v1/squads/user/${currentUser.id}`);
                 const data = await res.json();
                 renderSquads(data.squads || []);
                 return data.squads || [];
@@ -918,11 +860,12 @@
             list.querySelectorAll('.contact-item').forEach(el => el.remove());
 
             squads.forEach(s => {
-                const roomId = 'squad_' + s.id;
+                const roomId = s.roomId;
                 const memberCount = Array.isArray(s.members) ? s.members.length : 0;
                 const img = `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name.substring(0, 2))}&background=141419&color=00f3ff&size=80`;
                 const item = document.createElement('div');
                 item.className = 'contact-item';
+                item.dataset.squadId = s.id;
                 item.innerHTML = `
             <img src="${img}" class="contact-avatar squad-av" alt="${escHtml(s.name)}">
             <div class="contact-info">

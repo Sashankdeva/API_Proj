@@ -4,7 +4,6 @@ import com.squadup.entity.Squad;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -32,17 +31,10 @@ public interface SquadRepository extends JpaRepository<Squad, Long>, SquadReposi
             order by s.createdAt desc""")
     List<Squad> findNotJoinedBy(@Param("userId") Long userId);
 
-    /** Pagination on a derived query. */
-    Page<Squad> findByGameIgnoreCase(String game, Pageable pageable);
-
     /** Custom sorting with @Query: sort by member count, which a plain property Sort cannot express. */
     @Query(value = "select s from Squad s order by size(s.members) desc, s.createdAt desc",
             countQuery = "select count(s) from Squad s")
     Page<Squad> findMostPopular(Pageable pageable);
-
-    /** @Query combined with a caller-supplied Sort. */
-    @Query("select s from Squad s where lower(s.language) = lower(:language)")
-    List<Squad> findByLanguage(@Param("language") String language, Sort sort);
 
     /** Row lock so two players cannot both take the last free slot. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

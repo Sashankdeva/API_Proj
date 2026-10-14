@@ -74,10 +74,10 @@
 
             <!-- Profile Header Card -->
             <div class="profile-header-card">
-                <div class="profile-avatar-wrapper">
+                <div class="profile-avatar-wrapper" id="profileAvatarWrapper">
                     <img src="https://ui-avatars.com/api/?name=?&background=0D8ABC&color=fff&size=128"
                         alt="Profile Avatar" id="profileAvatar" class="profile-avatar-img">
-                    <button class="avatar-edit-btn" title="Change Avatar">
+                    <button class="avatar-edit-btn" title="Change Avatar" onclick="changeAvatar()">
                         <i class="fas fa-camera"></i>
                     </button>
                 </div>
@@ -134,8 +134,8 @@
                             <div class="pf-group">
                                 <label>Age</label>
                                 <div class="pf-display" id="display-age">—</div>
-                                <input type="number" class="pf-input" id="input-age" placeholder="Your age" min="10"
-                                    max="99" />
+                                <input type="number" class="pf-input" id="input-age" placeholder="Your age" min="1"
+                                    max="120" />
                             </div>
                             <div class="pf-group">
                                 <label>Gender</label>
@@ -172,7 +172,7 @@
                         <div class="pf-group">
                             <label>Email</label>
                             <div class="pf-display" id="display-email">—</div>
-                            <input type="text" class="pf-input" id="input-email" readonly style="opacity: 0.7; cursor: not-allowed; background-color: rgba(255, 255, 255, 0.05);" />
+                            <input type="text" class="pf-input pf-input-locked" id="input-email" readonly />
                             <span class="pf-hint"><i class="fas fa-lock"></i> Email cannot be changed</span>
                         </div>
                         <div class="pf-group" id="memberSinceGroup">
@@ -255,7 +255,7 @@
                             <div class="pf-display games-tags-display" id="display-gamesTags">
                                 <span class="empty-tag">No games added yet</span>
                             </div>
-                            <div class="pf-input-tag-group" id="tagInputGroup" style="display:none;">
+                            <div class="pf-input-tag-group" id="tagInputGroup">
                                 <input type="text" class="pf-input" id="input-gameTag"
                                     placeholder="Add a game and press Enter" />
                                 <div class="game-tags-edit" id="selectedGameTags"></div>
@@ -282,14 +282,12 @@
                 </div>
                 <!-- Danger Zone -->
                 <div class="profile-card danger-card full-width-card">
-                    <div class="profile-card-header" style="color: var(--danger-color, #ff4d4f);">
+                    <div class="profile-card-header">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>Danger Zone</h3>
                     </div>
                     <div class="profile-card-body">
-                        <p style="color: #aaa; margin-bottom: 1rem; font-size: 0.9rem;">Once you delete your account,
-                            there
-                            is no going back. Please be certain.</p>
+                        <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
                         <button class="btn-delete-account" onclick="deleteAccount()">
                             <i class="fas fa-trash-alt"></i> Delete Account
                         </button>
@@ -298,7 +296,7 @@
             </div>
 
             <!-- Save / Cancel Buttons (only shown in edit mode) -->
-            <div class="profile-action-bar" id="editActionBar" style="display:none;">
+            <div class="profile-action-bar" id="editActionBar">
                 <button class="btn-cancel" onclick="cancelEdit()">
                     <i class="fas fa-times"></i> Cancel
                 </button>

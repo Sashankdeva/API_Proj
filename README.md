@@ -37,7 +37,7 @@ player is the same as the username**, e.g. `sniperking` / `sniperking`, `neon_ni
 | SOAP WSDL (SoapUI)    | http://localhost:5500/soap/players.wsdl                |
 | H2 database console   | http://localhost:5500/h2-console (JDBC URL `jdbc:h2:file:./data/squadup`, user `sa`, no password) |
 
-Run the tests (53 tests covering every unit):
+Run the tests (55 tests covering every unit):
 
 ```bash
 ./mvnw test

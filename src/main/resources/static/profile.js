@@ -91,12 +91,9 @@ function renderProfile(user) {
     originalData = { ...u, gameTags: [...u.gameTags] };
     gameTags = [...u.gameTags];
 
-    const avatarUrl = u.avatarUrl ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username[0]?.toUpperCase() || '?')}&background=0D8ABC&color=fff&size=128`;
-
     // ── Header ───────────────────────────────────────────────────
     const avatarEl = document.getElementById('profileAvatar');
-    if (avatarEl) avatarEl.src = avatarUrl;
+    if (avatarEl) avatarEl.src = avatarFor(u);
 
     setText('displayName', u.displayName || u.firstName || 'Player');
     setText('displayUsername', '@' + u.username);
@@ -159,8 +156,7 @@ async function loadFriendCount() {
     try {
         const res = await fetch(`${API_BASE}/api/v1/friends/${uid}`);
         const data = await res.json();
-        const el = document.getElementById('statFriends');
-        if (el) el.textContent = (data.friends || []).length;
+        animateCount(document.getElementById('statFriends'), (data.friends || []).length);
     } catch { /* silently fail */ }
 }
 
@@ -171,8 +167,7 @@ async function loadSquadCount() {
     try {
         const res = await fetch(`${API_BASE}/api/v1/squads/user/${uid}`);
         const data = await res.json();
-        const el = document.getElementById('statSquads');
-        if (el) el.textContent = (data.squads || []).length;
+        animateCount(document.getElementById('statSquads'), (data.squads || []).length);
     } catch { /* silently fail */ }
 }
 
@@ -187,9 +182,9 @@ function renderGameTagsDisplay(tags) {
 function renderGameTagsEdit(tags) {
     const el = document.getElementById('selectedGameTags');
     if (!el) return;
-    el.innerHTML = tags.map(t =>
+    el.innerHTML = tags.map((t, i) =>
         `<span class="game-tag">${escHtml(t)}
-            <button type="button" class="tag-remove" onclick="removeTag('${escHtml(t)}')">×</button>
+            <button type="button" class="tag-remove" aria-label="Remove ${escHtml(t)}" onclick="removeTag(${i}, this)">×</button>
          </span>`).join('');
 }
 function addTag() {
@@ -201,10 +196,18 @@ function addTag() {
     gameTags.push(val);
     input.value = '';
     renderGameTagsEdit(gameTags);
+    document.getElementById('selectedGameTags')?.lastElementChild?.classList.add('tag-new');
 }
-function removeTag(tag) {
-    gameTags = gameTags.filter(t => t !== tag);
-    renderGameTagsEdit(gameTags);
+function removeTag(index, btn) {
+    const list = document.getElementById('selectedGameTags');
+    // Let the chip shrink away first; block other clicks so indexes stay valid meanwhile.
+    btn.closest('.game-tag')?.classList.add('tag-leaving');
+    list.style.pointerEvents = 'none';
+    setTimeout(() => {
+        gameTags.splice(index, 1);
+        renderGameTagsEdit(gameTags);
+        list.style.pointerEvents = '';
+    }, 180);
 }
 
 // ── Platform helpers ──────────────────────────────────────────────
@@ -249,38 +252,19 @@ function getCheckedPlatforms() {
 function toggleEditMode() {
     editMode = !editMode;
 
-    // pf-display: visible by default → hide in edit mode
-    document.querySelectorAll('.pf-display').forEach(el =>
-        el.style.display = editMode ? 'none' : '');
+    // body.profile-editing swaps the read-only values for inputs (see style.css).
+    document.body.classList.toggle('profile-editing', editMode);
 
-    // pf-input: CSS default is display:none → must explicitly set 'block'
-    document.querySelectorAll('.pf-input').forEach(el =>
-        el.style.display = editMode ? 'block' : 'none');
-
-    // pf-hint: same as pf-input
-    document.querySelectorAll('.pf-hint').forEach(el =>
-        el.style.display = editMode ? 'block' : 'none');
-
-    // Member Since group visibility
-    const memberSinceGroup = document.getElementById('memberSinceGroup');
-    if (memberSinceGroup) memberSinceGroup.style.display = editMode ? 'none' : 'block';
-
-    // Tag input group needs flex
-    const tagGroup = document.getElementById('tagInputGroup');
-    if (tagGroup) tagGroup.style.display = editMode ? 'flex' : 'none';
-
-    // Save/Cancel action bar
-    const actionBar = document.getElementById('editActionBar');
-    if (actionBar) actionBar.style.display = editMode ? 'flex' : 'none';
-
-    // Edit button label + icon
     const btn = document.getElementById('toggleEditBtn');
     if (btn) {
+        btn.classList.toggle('is-editing', editMode);
         btn.querySelector('span').textContent = editMode ? 'Cancel Edit' : 'Edit Profile';
         btn.querySelector('i').className = editMode ? 'fas fa-times' : 'fas fa-pen';
     }
 
     if (!editMode) {
+        document.getElementById('platformDropdownMenu')?.classList.remove('open');
+        document.getElementById('platformDropdownBtn')?.classList.remove('open');
         // Cancel → restore original
         gameTags = [...originalData.gameTags];
         renderProfile({ ...currentUser, ...originalData });
@@ -357,6 +341,47 @@ function buildDisplayName(firstName, lastName, fallback) {
     return parts || fallback || '';
 }
 
+// ── Avatar ────────────────────────────────────────────────────────
+function avatarFor(user) {
+    const initial = (user.username || '?')[0].toUpperCase();
+    return user.avatarUrl ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(initial)}&background=0D8ABC&color=fff&size=128`;
+}
+
+async function changeAvatar() {
+    const input = prompt('Paste a link to an image (http/https). Leave it empty to use your initial.',
+        currentUser.avatarUrl || '');
+    if (input === null) return; // cancelled
+    const avatarUrl = input.trim();
+    if (avatarUrl && !/^https?:\/\/\S+$/i.test(avatarUrl)) {
+        showToast('Please paste an http(s) image link.', true);
+        return;
+    }
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/users/${getUserId()}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatarUrl })
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Could not update avatar.', true); return; }
+
+        AuthService.updateSessionUser(data.user);
+        currentUser = AuthService.getCurrentUser();
+        originalData.avatarUrl = data.user.avatarUrl;
+
+        document.getElementById('profileAvatar').src = avatarFor(data.user);
+        loadGlobalAvatar();
+        const wrapper = document.getElementById('profileAvatarWrapper');
+        wrapper.classList.remove('avatar-updated');
+        void wrapper.offsetWidth; // restart the pop animation
+        wrapper.classList.add('avatar-updated');
+        showToast('✅ Avatar updated!');
+    } catch {
+        showToast('❌ Server unreachable.', true);
+    }
+}
+
 // ── Delete Account ────────────────────────────────────────────────
 async function deleteAccount() {
     if (!confirm('Are you absolutely sure? This permanently deletes your account.')) return;
@@ -387,6 +412,24 @@ function showToast(message, isError = false) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
+/** Counts a stat up (or down) to its new value instead of jumping. */
+function animateCount(el, target) {
+    if (!el) return;
+    const from = Number(el.textContent) || 0;
+    if (from === target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = target;
+        return;
+    }
+    const duration = 700;
+    const startedAt = performance.now();
+    const step = now => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(from + (target - from) * eased);
+        if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
 function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text ?? '';

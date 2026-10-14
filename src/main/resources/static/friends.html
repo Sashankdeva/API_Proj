@@ -96,7 +96,6 @@
     <script src="auth.js"></script>
     <script src="script.js"></script>
     <script>
-        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
         let currentUser = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -121,7 +120,7 @@
         // ── Load friends from API ─────────────────────────────────
         async function loadFriends() {
             try {
-                const res = await fetch(`${API}/api/v1/friends/${currentUser.id}`);
+                const res = await fetch(`${API_BASE}/api/v1/friends/${currentUser.id}`);
                 const data = await res.json();
                 renderFriends(data.friends || []);
             } catch { renderFriends([]); }
@@ -163,7 +162,7 @@
                         </div>
                     </div>
                     <div class="friend-card-actions">
-                        <button class="btn-chat" title="Chat" onclick="goToChat('friend','${escHtml(f.username)}')">
+                        <button class="btn-chat" title="Chat" data-username="${escHtml(f.username)}" onclick="goToChat('friend', this.dataset.username)">
                             <i class="fas fa-comments"></i> Chat
                         </button>
                         <button class="btn-danger-action" title="Block" onclick="alert('Block feature coming soon!')">
@@ -181,7 +180,7 @@
         // ── Load pending requests from API ────────────────────────
         async function loadPending() {
             try {
-                const res = await fetch(`${API}/api/v1/friends/pending/${currentUser.id}`);
+                const res = await fetch(`${API_BASE}/api/v1/friends/pending/${currentUser.id}`);
                 const data = await res.json();
                 renderPending(data.pending || []);
             } catch { renderPending([]); }
@@ -244,9 +243,9 @@
             if (!username) { alert('Please enter a username.'); return; }
 
             try {
-                const res = await fetch(`${API}/api/v1/friends/request`, {
+                const res = await fetch(`${API_BASE}/api/v1/friends/request`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ requesterId: currentUser.id, recipientUsername: username })
+                    body: JSON.stringify({ recipientUsername: username })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -264,7 +263,7 @@
 
         async function respondFriend(friendshipId, action, card) {
             try {
-                await fetch(`${API}/api/v1/friends/respond`, {
+                await fetch(`${API_BASE}/api/v1/friends/respond`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ friendshipId, action })
                 });
@@ -279,7 +278,7 @@
         async function unfriend(friendshipId, card) {
             if (!confirm('Remove this friend?')) return;
             try {
-                await fetch(`${API}/api/v1/friends/${friendshipId}`, { method: 'DELETE' });
+                await fetch(`${API_BASE}/api/v1/friends/${friendshipId}`, { method: 'DELETE' });
                 card.remove();
                 loadFriends();
             } catch (e) { console.error('unfriend:', e); }

@@ -417,7 +417,6 @@
         }
 
         // --- Registration Logic ---
-        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
         let currentUser = null;
         let currentRegisterBtn = null;
 
@@ -470,7 +469,7 @@
                 document.getElementById('registerModal').classList.add('active');
 
                 try {
-                    const res = await fetch(`${API}/api/v1/squads/user/${currentUser.id}`);
+                    const res = await fetch(`${API_BASE}/api/v1/squads/user/${currentUser.id}`);
                     const data = await res.json();
                     let squads = data.squads || [];
                     

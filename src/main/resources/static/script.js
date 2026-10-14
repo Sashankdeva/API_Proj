@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadPendingBadge();
                 if (typeof loadFriends === 'function') loadFriends();
                 if (typeof loadPending === 'function') loadPending();
-                if (typeof loadPendingRequests === 'function') loadPendingRequests(); // chat.html
             });
         }
     }
@@ -85,8 +84,7 @@ async function loadPendingBadge() {
     if (!authUser?.id) return;
 
     try {
-        const url = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
-        const res = await fetch(`${url}/api/v1/friends/pending/${authUser.id}`);
+        const res = await fetch(`${API_BASE}/api/v1/friends/pending/${authUser.id}`);
         if (res.ok) {
             const data = await res.json();
             const count = (data.pending || []).filter(p => p && p.username).length;

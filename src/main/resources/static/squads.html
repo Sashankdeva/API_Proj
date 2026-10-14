@@ -131,7 +131,6 @@
     <script src="auth.js"></script>
     <script src="script.js"></script>
     <script>
-        const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
         let currentUser = null;
         let memberCount = 5;
         const MIN_MEMBERS = 2;
@@ -151,7 +150,7 @@
             document.getElementById('squads-grid').innerHTML = '';
 
             try {
-                const res = await fetch(`${API}/api/v1/squads/user/${currentUser.id}`);
+                const res = await fetch(`${API_BASE}/api/v1/squads/user/${currentUser.id}`);
                 const data = await res.json();
                 document.getElementById('squads-loading').style.display = 'none';
                 renderSquads(data.squads || []);
@@ -193,7 +192,7 @@
                         <div class="squad-members-avatars">${memberAvatars}</div>
                     </div>
                     <div class="squad-card-actions">
-                        <button class="btn-chat" title="Squad Chat" onclick="goToChat('squad','${escHtml(s.name)}','${s.id}')">
+                        <button class="btn-chat" title="Squad Chat" onclick="goToChat(${Number(s.id)})">
                             <i class="fas fa-comments"></i> Chat
                         </button>
                         <button class="btn-danger-action" title="${isOwner ? 'Delete Squad' : 'Leave Squad'}"
@@ -232,9 +231,9 @@
             btn.textContent = 'Creating…';
 
             try {
-                const res = await fetch(`${API}/api/v1/squads`, {
+                const res = await fetch(`${API_BASE}/api/v1/squads`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, game, language: lang, maxMembers: memberCount, createdBy: currentUser.id })
+                    body: JSON.stringify({ name, game, language: lang, maxMembers: memberCount })
                 });
                 const data = await res.json();
 
@@ -257,26 +256,33 @@
         // ── Leave / Delete Squad ──────────────────────────────────
         async function leaveSquad(squadId, card) {
             if (!confirm('Leave this squad?')) return;
-            try {
-                await fetch(`${API}/api/v1/squads/${squadId}`, {
-                    method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: currentUser.id })
-                });
-                card.remove();
-                if (!document.getElementById('squads-grid').children.length) {
-                    document.getElementById('squads-empty').style.display = 'flex';
-                }
-            } catch (e) { console.error('leaveSquad:', e); }
+            await removeSquad(squadId, card);
         }
 
         async function deleteSquad(squadId, card) {
             if (!confirm('Delete this squad? This cannot be undone.')) return;
-            await leaveSquad(squadId, card); // same endpoint, server checks ownership
+            await removeSquad(squadId, card);
+        }
+
+        // Same endpoint for both: the server deletes the squad for its owner, otherwise leaves it.
+        async function removeSquad(squadId, card) {
+            try {
+                const res = await fetch(`${API_BASE}/api/v1/squads/${squadId}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.error || 'Could not update the squad.');
+                    return;
+                }
+                card.remove();
+                if (!document.getElementById('squads-grid').children.length) {
+                    document.getElementById('squads-empty').style.display = 'flex';
+                }
+            } catch (e) { console.error('removeSquad:', e); }
         }
 
         // ── Go to chat ────────────────────────────────────────────
-        function goToChat(type, target, squadId) {
-            sessionStorage.setItem('chat_open', JSON.stringify({ type, target, squadId }));
+        function goToChat(squadId) {
+            sessionStorage.setItem('chat_open', JSON.stringify({ type: 'squad', squadId }));
             window.location.href = 'chat.html';
         }
 

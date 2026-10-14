@@ -16,10 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Fetch & Render ──────────────────────────────────────────────────
 async function loadPublicSquads(userId) {
-    const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
-
     try {
-        const res = await fetch(`${API}/api/v1/squads/public/${userId}`);
+        const res = await fetch(`${API_BASE}/api/v1/squads/public/${userId}`);
         const data = await res.json();
         
         allPublicSquads = data.squads || [];
@@ -264,14 +262,8 @@ async function joinSquad(squadId, btnElement) {
     btnElement.disabled = true;
     btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Joining...';
 
-    const API = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5500';
-    
     try {
-        const res = await fetch(`${API}/api/v1/squads/${squadId}/join`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id })
-        });
+        const res = await fetch(`${API_BASE}/api/v1/squads/${squadId}/join`, { method: 'POST' });
         
         const data = await res.json();
         

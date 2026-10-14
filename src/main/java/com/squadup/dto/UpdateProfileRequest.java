@@ -16,10 +16,12 @@ public record UpdateProfileRequest(
         @Size(max = 10, message = "Max 10 game tags.") List<@Size(max = 30, message = "Game tags must be at most 30 characters.") String> gameTags,
         @Size(max = 30) String region,
         @Size(max = 30) String language,
-        @Size(max = 500, message = "Avatar URL is too long.") String avatarUrl,
+        @Size(max = 500, message = "Avatar URL is too long.")
+        @Pattern(regexp = "^(|https?://[^\\s\"'<>]+)$", message = "Avatar must be an http(s) image URL.")
+        String avatarUrl,
 
         @Size(min = 3, max = 30, message = "Username must be 3-30 characters.")
-        @Pattern(regexp = "^\\S+$", message = "Username cannot contain spaces.")
+        @Pattern(regexp = AuthDtos.USERNAME_PATTERN, message = AuthDtos.USERNAME_MESSAGE)
         String newUsername,
 
         @Size(max = 30, message = "First name must be at most 30 characters.") String firstName,

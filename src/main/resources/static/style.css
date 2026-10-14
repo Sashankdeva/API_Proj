@@ -244,6 +244,18 @@ body.auth-body {
     animation: slideDown 0.4s ease-out;
 }
 
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .top-banner .banner-icon {
     color: #ffaa00;
     font-size: 1.2rem;
@@ -253,6 +265,7 @@ body.auth-body {
 
 .top-banner .banner-text {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 0.6rem;
     flex: 1;
@@ -763,19 +776,6 @@ body.auth-body {
 }
 
 /* Custom Dropdown Styling */
-.dual-filters {
-    display: flex;
-    flex-direction: row; /* Force row layout */
-    flex-wrap: nowrap; /* Prevent stacking */
-    gap: 1.5rem;
-    justify-content: center;
-    align-items: center;
-    margin-top: 1.5rem;
-    margin-bottom: 2rem;
-    padding: 0 1rem;
-    width: 100%;
-}
-
 .pf-select {
     appearance: none; /* Remove default browser arrow */
     -webkit-appearance: none;
@@ -805,41 +805,9 @@ body.auth-body {
 }
 
 .pf-select option {
-    background-color: var(--bg-dark); /* Keep options readable */
+    background-color: #0e0e14; /* Keep options readable */
     color: var(--text-color);
     font-family: 'Rajdhani', sans-serif;
-}
-
-.filter-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    justify-content: center;
-}
-
-.game-pill {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.game-pill:hover {
-    background: rgba(189, 0, 255, 0.1);
-    border-color: var(--secondary-color);
-}
-
-.game-pill.active {
-    background: var(--secondary-color);
-    color: #fff;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 15px rgba(189, 0, 255, 0.4);
 }
 
 .search-modal-results {
@@ -860,620 +828,6 @@ body.auth-body {
     border-radius: 4px;
 }
 
-
-/* =========================================
-   Profile Page Styles
-   ========================================= */
-
-.profile-main {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: 100%;
-    padding: 2rem 2.5rem;
-    gap: 1.5rem;
-    background: transparent;
-}
-
-.profile-main>* {
-    flex-shrink: 0;
-}
-
-/* ---- Completion Banner ---- */
-.profile-completion-banner {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: linear-gradient(135deg, rgba(189, 0, 255, 0.15), rgba(0, 243, 255, 0.1));
-    border: 1px solid rgba(189, 0, 255, 0.5);
-    border-radius: 10px;
-    padding: 1rem 1.5rem;
-    animation: slideDown 0.5s ease-out;
-    position: relative;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-15px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.banner-icon {
-    color: #ffaa00;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-    filter: drop-shadow(0 0 6px #ffaa00);
-}
-
-.banner-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    flex: 1;
-}
-
-.banner-text strong {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.95rem;
-    color: var(--text-color);
-    letter-spacing: 1px;
-}
-
-.banner-text span {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.banner-close {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: color 0.2s;
-    flex-shrink: 0;
-}
-
-.banner-close:hover {
-    color: var(--error-color);
-}
-
-/* ---- Profile Header Card ---- */
-.profile-header-card {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    background: var(--card-bg);
-    backdrop-filter: blur(var(--blur-amount));
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 2rem 2.5rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.profile-header-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
-    box-shadow: 0 0 12px var(--primary-color);
-}
-
-.profile-avatar-wrapper {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.profile-avatar-img {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 3px solid var(--secondary-color);
-    box-shadow: 0 0 20px rgba(189, 0, 255, 0.4);
-    object-fit: cover;
-    display: block;
-}
-
-.avatar-edit-btn {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background: var(--primary-color);
-    border: none;
-    color: #000;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 8px var(--primary-color);
-}
-
-.avatar-edit-btn:hover {
-    background: var(--secondary-color);
-    box-shadow: 0 0 12px var(--secondary-color);
-    color: #fff;
-}
-
-.profile-headline {
-    flex: 1;
-}
-
-.profile-headline h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.8rem;
-    color: var(--text-color);
-    letter-spacing: 2px;
-    margin-bottom: 0.2rem;
-}
-
-.display-username {
-    color: var(--primary-color);
-    font-size: 1rem;
-    letter-spacing: 1px;
-    margin-bottom: 1.2rem;
-}
-
-.profile-stats-row {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-}
-
-.profile-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.1rem;
-}
-
-.stat-number {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.4rem;
-    color: var(--primary-color);
-    text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.profile-stat-divider {
-    width: 1px;
-    height: 36px;
-    background: var(--border-color);
-}
-
-.profile-header-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    flex-shrink: 0;
-}
-
-.btn-edit-profile,
-.btn-logout {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: all 0.25s ease;
-    white-space: nowrap;
-}
-
-.btn-edit-profile {
-    background: rgba(0, 243, 255, 0.12);
-    color: var(--primary-color);
-    border: 1px solid rgba(0, 243, 255, 0.35);
-}
-
-.btn-edit-profile:hover,
-.btn-edit-profile.active-edit {
-    background: var(--primary-color);
-    color: #000;
-    box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
-}
-
-.btn-logout {
-    background: rgba(255, 42, 109, 0.1);
-    color: var(--error-color);
-    border: 1px solid rgba(255, 42, 109, 0.35);
-}
-
-.btn-logout:hover {
-    background: var(--error-color);
-    color: #fff;
-    box-shadow: 0 0 12px rgba(255, 42, 109, 0.4);
-}
-
-/* ---- Profile Grid ---- */
-.profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.full-width-card {
-    grid-column: 1 / -1;
-}
-
-/* ---- Profile Card ---- */
-.profile-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(var(--blur-amount));
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: border-color 0.3s ease;
-}
-
-.profile-card:hover {
-    border-color: rgba(0, 243, 255, 0.2);
-}
-
-.profile-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.profile-card-header i {
-    color: var(--primary-color);
-    font-size: 1.1rem;
-    width: 20px;
-    text-align: center;
-}
-
-.profile-card-header h3 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text-color);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
-
-.profile-card-body {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-}
-
-/* ---- Profile Form Fields ---- */
-.pf-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.pf-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.pf-group label {
-    font-size: 0.78rem;
-    color: var(--primary-color);
-    letter-spacing: 1px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.pf-display {
-    padding: 0.65rem 0;
-    font-size: 1rem;
-    color: var(--text-color);
-    border-bottom: 1px solid transparent;
-    min-height: 2rem;
-    transition: all 0.2s;
-}
-
-.pf-display.bio-display {
-    color: var(--text-muted);
-    font-style: italic;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    min-height: 3.5rem;
-}
-
-.pf-input {
-    display: none;
-    width: 100%;
-    padding: 10px 14px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    color: var(--text-color);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    outline: none;
-}
-
-.pf-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.pf-select {
-    appearance: none;
-    cursor: pointer;
-}
-
-.pf-textarea {
-    resize: none;
-    min-height: 90px;
-    line-height: 1.5;
-}
-
-.pf-hint {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.char-counter {
-    text-align: right;
-    display: block;
-}
-
-/* Edit mode active state */
-body.edit-mode .pf-display {
-    display: none;
-}
-
-body.edit-mode .pf-input {
-    display: block;
-}
-
-body.edit-mode .pf-input-tag-group {
-    display: flex !important;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-body.edit-mode .games-tags-display {
-    display: none !important;
-}
-
-body.edit-mode .profile-card {
-    border-color: rgba(0, 243, 255, 0.25);
-}
-
-/* Account Info card stays read-only — keep its display values visible in edit mode */
-body.edit-mode .profile-card.account-readonly .pf-display {
-    display: block;
-}
-
-/* pf-hint locks/notes are always visible */
-body.edit-mode .pf-hint {
-    display: flex;
-}
-
-/* ---- Game Tags ---- */
-.games-tags-display {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem 0;
-    min-height: 2rem;
-}
-
-.game-tag {
-    background: rgba(189, 0, 255, 0.15);
-    border: 1px solid rgba(189, 0, 255, 0.4);
-    color: var(--secondary-color);
-    font-size: 0.85rem;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-}
-
-.game-tag-edit {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(0, 243, 255, 0.1);
-    border: 1px solid rgba(0, 243, 255, 0.3);
-    color: var(--primary-color);
-    font-size: 0.85rem;
-    padding: 4px 10px;
-    border-radius: 20px;
-}
-
-.game-tag-edit .remove-tag {
-    cursor: pointer;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    transition: color 0.2s;
-}
-
-.game-tag-edit .remove-tag:hover {
-    color: var(--error-color);
-}
-
-.game-tags-edit {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    min-height: 1.5rem;
-}
-
-.empty-tag {
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
-/* ---- Action Bar ---- */
-.profile-action-bar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    padding: 1rem 0 0.5rem;
-}
-
-.btn-save,
-.btn-cancel {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: all 0.25s ease;
-}
-
-.btn-save {
-    background: linear-gradient(90deg, var(--primary-color), #00c9d4);
-    color: #000;
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-}
-
-.btn-save:hover {
-    background: var(--secondary-color);
-    color: #fff;
-    box-shadow: 0 0 20px rgba(189, 0, 255, 0.4);
-    transform: translateY(-1px);
-}
-
-.btn-cancel {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-}
-
-.btn-cancel:hover {
-    background: rgba(255, 42, 109, 0.1);
-    color: var(--error-color);
-    border-color: var(--error-color);
-}
-
-/* ---- Danger Zone ---- */
-.danger-card {
-    border-color: rgba(255, 42, 109, 0.3) !important;
-}
-
-.btn-delete-account {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: rgba(255, 42, 109, 0.1);
-    color: var(--error-color);
-    border: 1px solid rgba(255, 42, 109, 0.4);
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    align-self: flex-start;
-}
-
-.btn-delete-account:hover {
-    background: var(--error-color);
-    color: #fff;
-    box-shadow: 0 0 15px rgba(255, 42, 109, 0.5);
-    transform: translateY(-2px);
-}
-
-/* ---- Toast Notification ---- */
-.toast {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: rgba(20, 20, 25, 0.95);
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
-    padding: 0.9rem 1.5rem;
-    color: var(--text-color);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 9999;
-}
-
-.toast.show {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.toast.success {
-    border-color: var(--primary-color);
-}
-
-.toast.error {
-    border-color: var(--error-color);
-    color: var(--error-color);
-}
-
-/* ---- Profile Scrollbar ---- */
-.profile-main::-webkit-scrollbar {
-    width: 5px;
-}
-
-.profile-main::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.profile-main::-webkit-scrollbar-thumb {
-    background: rgba(0, 243, 255, 0.2);
-    border-radius: 10px;
-}
-
-.profile-main::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 243, 255, 0.4);
-}
 
 /* =========================================
    Friends & Squads Pages Styles
@@ -2179,141 +1533,6 @@ body.edit-mode .pf-hint {
    Events Page Styles
    ========================================= */
 
-.events-main {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    padding: 0;
-}
-
-.events-layout {
-    display: flex;
-    height: 100%;
-    overflow: hidden;
-}
-
-/* --- Left Filter Panel --- */
-.events-filter-panel {
-    width: 230px;
-    flex-shrink: 0;
-    background: rgba(10, 10, 14, 0.85);
-    border-right: 1px solid var(--border-color);
-    padding: 1.5rem 1.2rem;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.4rem;
-}
-
-.events-filter-panel::-webkit-scrollbar {
-    width: 4px;
-}
-
-.events-filter-panel::-webkit-scrollbar-thumb {
-    background: rgba(0, 243, 255, 0.2);
-    border-radius: 10px;
-}
-
-.filter-panel-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.85rem;
-    color: var(--primary-color);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.filter-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-}
-
-.filter-section-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 0.2rem;
-}
-
-.filter-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.filter-reset-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 42, 109, 0.35);
-    color: var(--error-color);
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: all 0.2s ease;
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: center;
-}
-
-.filter-reset-btn:hover {
-    background: var(--error-color);
-    color: #fff;
-    box-shadow: 0 0 10px rgba(255, 42, 109, 0.35);
-}
-
-/* --- Right Events Content --- */
-.events-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 2rem 2.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.events-content::-webkit-scrollbar {
-    width: 5px;
-}
-
-.events-content::-webkit-scrollbar-thumb {
-    background: rgba(0, 243, 255, 0.2);
-    border-radius: 10px;
-}
-
-.events-content-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.events-content-header h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.8rem;
-    color: var(--text-color);
-    letter-spacing: 2px;
-}
-
-.events-subtitle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    margin-top: 0.3rem;
-    letter-spacing: 0.5px;
-}
-
 /* --- Events Grid --- */
 .events-grid {
     display: grid;
@@ -2613,15 +1832,71 @@ body.edit-mode .pf-hint {
 }
 
 /* =========================================
-   Profile Page — Complete Styles
+   Profile Page
    ========================================= */
 
 .profile-main {
-    padding: 2rem 2.5rem;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 1.8rem;
+    height: 100%;
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: transparent;
+}
+
+.profile-main > * { flex-shrink: 0; }
+
+.profile-main::-webkit-scrollbar { width: 5px; }
+.profile-main::-webkit-scrollbar-track { background: transparent; }
+.profile-main::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.2); border-radius: 10px; }
+.profile-main::-webkit-scrollbar-thumb:hover { background: rgba(0, 243, 255, 0.4); }
+
+/* ── Motion ──────────────────────────────────────
+   Entrance: the header rises first, then the cards one after another.
+   "backwards" fill only applies the start frame during the delay, so
+   hover transforms keep working once the entrance has finished. */
+@keyframes profileRise {
+    from { opacity: 0; transform: translateY(26px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes profileBarFlow {
+    from { background-position: 0% 50%; }
+    to   { background-position: 200% 50%; }
+}
+@keyframes profileShine {
+    from { left: -60%; }
+    to   { left: 130%; }
+}
+@keyframes avatarSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes avatarPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.88); }
+    70%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+@keyframes fieldIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes editGlow {
+    from { opacity: 0.55; }
+    to   { opacity: 1; }
+}
+@keyframes actionBarIn {
+    from { opacity: 0; transform: translateY(100%); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes tagPop {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes tagLeave {
+    to { opacity: 0; transform: scale(0.6); }
 }
 
 /* ── Header Card ─────────────────────────────── */
@@ -2630,46 +1905,89 @@ body.edit-mode .pf-hint {
     align-items: center;
     gap: 2rem;
     background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-amount));
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 2rem 2.5rem;
     position: relative;
     overflow: hidden;
+    animation: profileRise 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
+/* Flowing neon bar along the top edge */
 .profile-header-card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color), var(--secondary-color));
+    background-size: 200% 100%;
+    box-shadow: 0 0 12px var(--primary-color);
+    animation: profileBarFlow 5s linear infinite;
+}
+/* One light sweep across the card after it appears */
+.profile-header-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    transform: skewX(-20deg);
+    pointer-events: none;
+    animation: profileShine 1.4s 0.5s ease-out backwards;
 }
 
+/* Avatar with a rotating neon ring */
 .profile-avatar-wrapper {
     position: relative;
     flex-shrink: 0;
+    border-radius: 50%;
+}
+.profile-avatar-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--primary-color), var(--secondary-color), transparent 65%, var(--primary-color));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+    animation: avatarSpin 6s linear infinite;
 }
 .profile-avatar-img {
+    position: relative;
     width: 100px;
     height: 100px;
     border-radius: 50%;
     border: 3px solid rgba(0, 243, 255, 0.35);
+    box-shadow: 0 0 20px rgba(189, 0, 255, 0.4);
     object-fit: cover;
     display: block;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s;
+}
+.profile-avatar-wrapper:hover .profile-avatar-img {
+    transform: scale(1.05);
+    box-shadow: 0 0 28px rgba(0, 243, 255, 0.45);
+}
+.profile-avatar-wrapper.avatar-updated .profile-avatar-img {
+    animation: avatarPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .avatar-edit-btn {
     position: absolute;
     bottom: 2px; right: 2px;
+    z-index: 1;
     width: 28px; height: 28px;
     border-radius: 50%;
     background: var(--card-bg);
     border: 1px solid rgba(0, 243, 255, 0.4);
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
     color: var(--primary-color);
     font-size: 0.7rem;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.avatar-edit-btn:hover { background: var(--primary-color); color: #000; }
+.avatar-edit-btn:hover { background: var(--primary-color); color: #000; transform: scale(1.15) rotate(-10deg); }
 
 .profile-headline { flex: 1; }
 .profile-headline h1 {
@@ -2689,6 +2007,7 @@ body.edit-mode .pf-hint {
 .profile-stats-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.8rem;
 }
@@ -2696,13 +2015,18 @@ body.edit-mode .pf-hint {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.1rem;
     padding: 0.4rem 1.2rem;
+    border-radius: 8px;
+    transition: background 0.25s, transform 0.25s;
 }
+.profile-stat:hover { background: rgba(0, 243, 255, 0.06); transform: translateY(-2px); }
 .stat-number {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.3rem;
     color: var(--primary-color);
     text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+    font-variant-numeric: tabular-nums;
 }
 .stat-label {
     font-size: 0.7rem;
@@ -2722,15 +2046,14 @@ body.edit-mode .pf-hint {
     flex-direction: column;
     gap: 0.6rem;
     margin-left: auto;
+    flex-shrink: 0;
 }
-.btn-edit-profile {
+.btn-edit-profile,
+.btn-logout {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.4rem;
-    background: rgba(0, 243, 255, 0.1);
-    color: var(--primary-color);
-    border: 1px solid rgba(0, 243, 255, 0.4);
     border-radius: 6px;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.75rem;
@@ -2740,29 +2063,29 @@ body.edit-mode .pf-hint {
     cursor: pointer;
     transition: all 0.25s;
     white-space: nowrap;
+}
+.btn-edit-profile {
+    background: rgba(0, 243, 255, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(0, 243, 255, 0.4);
 }
 .btn-edit-profile:hover {
     background: var(--primary-color);
     color: #000;
     box-shadow: 0 0 14px rgba(0, 243, 255, 0.4);
 }
+.btn-edit-profile i { transition: transform 0.3s ease; }
+.btn-edit-profile.is-editing {
+    background: rgba(255, 42, 109, 0.08);
+    color: var(--error-color);
+    border-color: rgba(255, 42, 109, 0.4);
+}
+.btn-edit-profile.is-editing:hover { background: var(--error-color); color: #fff; box-shadow: 0 0 14px rgba(255, 42, 109, 0.4); }
+.btn-edit-profile.is-editing i { transform: rotate(90deg); }
 .btn-logout {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1.4rem;
     background: rgba(255, 42, 109, 0.08);
     color: var(--error-color);
     border: 1px solid rgba(255, 42, 109, 0.35);
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.25s;
-    white-space: nowrap;
 }
 .btn-logout:hover {
     background: var(--error-color);
@@ -2770,22 +2093,52 @@ body.edit-mode .pf-hint {
     box-shadow: 0 0 12px rgba(255, 42, 109, 0.4);
 }
 
-/* ── Profile Grid ────────────────────────────── */
+/* ── Profile Grid & Cards ────────────────────── */
 .profile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
 }
+.full-width-card { grid-column: 1 / -1; }
 
-/* ── Profile Card ────────────────────────────── */
 .profile-card {
+    position: relative;
     background: var(--card-bg);
+    backdrop-filter: blur(var(--blur-amount));
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    overflow: hidden;
-    transition: border-color 0.25s;
+    transition: border-color 0.25s, transform 0.3s ease, box-shadow 0.3s ease;
+    animation: profileRise 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
-.profile-card:hover { border-color: rgba(0, 243, 255, 0.25); }
+.profile-grid > .profile-card:nth-child(1) { animation-delay: 0.10s; }
+.profile-grid > .profile-card:nth-child(2) { animation-delay: 0.17s; }
+.profile-grid > .profile-card:nth-child(3) { animation-delay: 0.24s; }
+.profile-grid > .profile-card:nth-child(4) { animation-delay: 0.31s; }
+.profile-grid > .profile-card:nth-child(5) { animation-delay: 0.38s; }
+
+.profile-card:hover {
+    border-color: rgba(0, 243, 255, 0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35), 0 0 18px rgba(0, 243, 255, 0.08);
+}
+/* The platform menu drops out of the gaming card, so that card sits above its neighbours. */
+.gaming-card { z-index: 2; }
+
+/* Neon outline that pulses while the profile is being edited */
+.profile-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 0 1px rgba(0, 243, 255, 0.45), 0 0 22px rgba(0, 243, 255, 0.15);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+.profile-editing .profile-card:not(.danger-card)::after {
+    opacity: 1;
+    animation: editGlow 1.6s ease-in-out infinite alternate;
+}
 
 .profile-card-header {
     display: flex;
@@ -2793,9 +2146,20 @@ body.edit-mode .pf-hint {
     gap: 0.6rem;
     padding: 1rem 1.4rem;
     border-bottom: 1px solid var(--border-color);
+    border-radius: 12px 12px 0 0;
     background: rgba(0, 0, 0, 0.2);
 }
-.profile-card-header i { color: var(--primary-color); font-size: 0.9rem; }
+.profile-card-header i {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    width: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+.profile-card:hover .profile-card-header i {
+    transform: scale(1.2);
+    text-shadow: 0 0 8px currentColor;
+}
 .profile-card-header h3 {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.8rem;
@@ -2805,8 +2169,6 @@ body.edit-mode .pf-hint {
 }
 
 .profile-card-body { padding: 1.4rem; display: flex; flex-direction: column; gap: 1.2rem; }
-
-.full-width-card { grid-column: 1 / -1; }
 
 /* ── Form Groups ─────────────────────────────── */
 .pf-row {
@@ -2827,17 +2189,25 @@ body.edit-mode .pf-hint {
     font-weight: 600;
 }
 
-/* Display mode (shown by default) */
+/* Read-only value (view mode) */
 .pf-display {
     color: var(--text-color);
     font-size: 0.95rem;
     min-height: 1.3em;
     padding: 0.35rem 0;
     word-break: break-word;
+    animation: fieldIn 0.35s ease backwards;
 }
 .pf-display i { color: var(--primary-color); margin-right: 0.3rem; }
+.pf-display.bio-display {
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    min-height: 3.5rem;
+}
 
-/* Input mode (HIDDEN by default — shown only in edit mode) */
+/* Input (edit mode only) */
 .pf-input {
     display: none;
     width: 100%;
@@ -2856,8 +2226,13 @@ body.edit-mode .pf-hint {
     border-color: var(--primary-color);
     box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
 }
+.pf-input-locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: rgba(255, 255, 255, 0.05);
+}
 select.pf-input option { background: #0e0e14; }
-/* -- Themed Select Dropdown -- */
+/* Themed select (shared with the home filters and the create-squad modal) */
 .pf-select {
     appearance: none;
     -webkit-appearance: none;
@@ -2882,19 +2257,27 @@ select.pf-input option { background: #0e0e14; }
 .pf-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,243,255,0.12); }
 .pf-select option { background: #0e0e14; color: var(--text-color); }
 .pf-select option:checked { background: rgba(0,243,255,0.2); color: var(--primary-color); }
+/* The home filters center their text and need a minimum width; profile fields do not. */
+.profile-card .pf-select { min-width: 0; text-align: left; text-align-last: left; }
 
-
-/* Hint text (HIDDEN by default — shown in edit mode) */
+/* Hint text (edit mode only) */
 .pf-hint {
     display: none;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.75rem;
     color: var(--text-muted);
-    display: none;
 }
-.char-counter { font-size: 0.75rem; color: var(--text-muted); }
+.char-counter { justify-content: flex-end; }
 
-/* Bio textarea */
-.pf-textarea { resize: vertical; min-height: 90px; }
+.pf-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+/* ── Edit mode: body.profile-editing (toggled by profile.js) ── */
+.profile-editing .pf-display,
+.profile-editing #memberSinceGroup { display: none; }
+.profile-editing .pf-input { display: block; animation: fieldIn 0.35s ease backwards; }
+.profile-editing .pf-hint { display: flex; animation: fieldIn 0.35s 0.05s ease backwards; }
+.profile-editing .pf-input-tag-group { display: flex; }
 
 /* ── Game Tags ───────────────────────────────── */
 .games-tags-display { display: flex; flex-wrap: wrap; gap: 0.4rem; min-height: 1.5em; }
@@ -2908,15 +2291,29 @@ select.pf-input option { background: #0e0e14; }
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 0.8rem;
+    font-weight: 500;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.game-tag:hover { background: rgba(0, 243, 255, 0.16); box-shadow: 0 0 10px rgba(0, 243, 255, 0.25); }
+.games-tags-display .game-tag { animation: tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+.games-tags-display .game-tag:nth-child(2) { animation-delay: 0.05s; }
+.games-tags-display .game-tag:nth-child(3) { animation-delay: 0.10s; }
+.games-tags-display .game-tag:nth-child(n+4) { animation-delay: 0.15s; }
+.game-tag.tag-new { animation: tagPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.game-tag.tag-leaving { animation: tagLeave 0.18s ease-in forwards; }
+.empty-tag {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
 }
 .tag-remove {
     background: none; border: none;
     color: rgba(0, 243, 255, 0.6);
     cursor: pointer; font-size: 1rem;
     padding: 0; line-height: 1;
-    transition: color 0.2s;
+    transition: color 0.2s, transform 0.2s;
 }
-.tag-remove:hover { color: var(--error-color); }
+.tag-remove:hover { color: var(--error-color); transform: scale(1.3); }
 
 .pf-input-tag-group { display: none; flex-direction: column; gap: 0.5rem; }
 .game-tags-edit { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -2949,14 +2346,13 @@ select.pf-input option { background: #0e0e14; }
     color: var(--text-color);
 }
 .platform-dropdown-btn i {
-    transition: transform 0.2s;
+    transition: transform 0.25s ease;
     font-size: 0.75rem;
     color: var(--primary-color);
 }
 .platform-dropdown-btn.open i { transform: rotate(180deg); }
 
 .platform-dropdown-menu {
-    display: none;
     position: absolute;
     top: calc(100% + 4px);
     left: 0; right: 0;
@@ -2966,13 +2362,23 @@ select.pf-input option { background: #0e0e14; }
     padding: 0.5rem;
     z-index: 50;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 0.1rem;
     max-height: 240px;
     overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: top center;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
 }
-.platform-dropdown-menu.open { display: flex; }
+.platform-dropdown-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
 
 .platform-option {
     display: flex;
@@ -2998,10 +2404,22 @@ select.pf-input option { background: #0e0e14; }
 }
 
 /* ── Danger Zone ─────────────────────────────── */
-.danger-card .profile-card-header { border-bottom-color: rgba(255, 77, 79, 0.3); }
+.danger-card,
+.danger-card:hover { border-color: rgba(255, 42, 109, 0.3); }
+.danger-card .profile-card-header,
+.danger-card .profile-card-header i {
+    color: var(--error-color);
+    border-bottom-color: rgba(255, 42, 109, 0.3);
+}
+.danger-text {
+    color: #aaa;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
 .btn-delete-account {
     display: inline-flex;
     align-items: center;
+    align-self: flex-start;
     gap: 0.5rem;
     padding: 0.7rem 1.6rem;
     background: rgba(255, 42, 109, 0.1);
@@ -3020,13 +2438,14 @@ select.pf-input option { background: #0e0e14; }
     background: var(--error-color);
     color: #fff;
     box-shadow: 0 0 16px rgba(255, 42, 109, 0.45);
+    transform: translateY(-2px);
 }
 
-/* ── Save / Cancel Action Bar ────────────────── */
+/* ── Save / Cancel Action Bar (edit mode only) ── */
 .profile-action-bar {
     position: sticky;
     bottom: 0;
-    display: flex;
+    display: none;
     justify-content: flex-end;
     gap: 0.75rem;
     padding: 1rem 1.5rem;
@@ -3036,53 +2455,57 @@ select.pf-input option { background: #0e0e14; }
     border-radius: 0 0 12px 12px;
     z-index: 10;
 }
-.btn-cancel {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.65rem 1.4rem;
-    background: rgba(255, 42, 109, 0.08);
-    color: var(--error-color);
-    border: 1px solid rgba(255, 42, 109, 0.35);
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+.profile-editing .profile-action-bar {
+    display: flex;
+    animation: actionBarIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
-.btn-cancel:hover { background: var(--error-color); color: #fff; }
+.btn-cancel,
 .btn-save {
     display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.65rem 1.8rem;
-    background: rgba(0, 255, 136, 0.1);
-    color: #00ff88;
-    border: 1px solid rgba(0, 255, 136, 0.35);
     border-radius: 6px;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
     text-transform: uppercase; cursor: pointer; transition: all 0.25s;
 }
-.btn-save:hover { background: #00ff88; color: #000; box-shadow: 0 0 14px rgba(0, 255, 136, 0.4); }
-.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-cancel {
+    padding: 0.65rem 1.4rem;
+    background: rgba(255, 42, 109, 0.08);
+    color: var(--error-color);
+    border: 1px solid rgba(255, 42, 109, 0.35);
+}
+.btn-cancel:hover { background: var(--error-color); color: #fff; }
+.btn-save {
+    padding: 0.65rem 1.8rem;
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.35);
+}
+.btn-save:hover { background: #00ff88; color: #000; box-shadow: 0 0 14px rgba(0, 255, 136, 0.4); transform: translateY(-1px); }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* ── Toast ───────────────────────────────────── */
 .toast {
     position: fixed;
     bottom: 2rem; right: 2rem;
     padding: 0.9rem 1.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     color: #fff;
     font-family: 'Rajdhani', sans-serif;
     font-size: 1rem;
     font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(calc(100% + 2rem));
     pointer-events: none;
-    transition: opacity 0.3s, transform 0.3s;
+    transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 9999;
     backdrop-filter: blur(8px);
     max-width: 340px;
 }
-.toast.show { opacity: 1; transform: translateY(0); }
+.toast.show { opacity: 1; transform: none; }
 
-/* ---- Profile Responsive ---- */
+/* ── Responsive ──────────────────────────────── */
 @media (max-width: 900px) {
     .profile-grid { grid-template-columns: 1fr; }
     .profile-header-card { flex-direction: column; text-align: center; gap: 1.2rem; }
@@ -3090,4 +2513,15 @@ select.pf-input option { background: #0e0e14; }
     .profile-main { padding: 1rem; }
     .pf-row { grid-template-columns: 1fr; }
     .profile-header-actions { flex-direction: row; margin-left: 0; }
+}
+
+/* Respect the operating system's "reduce motion" setting */
+@media (prefers-reduced-motion: reduce) {
+    .profile-main *,
+    .profile-main *::before,
+    .profile-main *::after,
+    .toast {
+        animation: none !important;
+        transition: none !important;
+    }
 }

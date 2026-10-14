@@ -2,10 +2,15 @@ package com.squadup.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /** Request bodies for /api/v1/auth. Passwords are masked in toString() so they never reach the logs. */
 public final class AuthDtos {
+
+    /** Letters, digits, '.', '_' and '-' only, so a username is always safe to show anywhere in the UI. */
+    public static final String USERNAME_PATTERN = "^[A-Za-z0-9._-]*$";
+    public static final String USERNAME_MESSAGE = "Username can only contain letters, numbers, '.', '_' and '-'.";
 
     private AuthDtos() {
     }
@@ -14,6 +19,7 @@ public final class AuthDtos {
             @NotBlank(message = "All fields are required.")
             @Size(min = 3, message = "Username must be at least 3 characters.")
             @Size(max = 30, message = "Username must be at most 30 characters.")
+            @Pattern(regexp = USERNAME_PATTERN, message = USERNAME_MESSAGE)
             String username,
 
             @NotBlank(message = "All fields are required.")

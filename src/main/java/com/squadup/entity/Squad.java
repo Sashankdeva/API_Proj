@@ -1,5 +1,6 @@
 package com.squadup.entity;
 
+import com.squadup.util.RoomIds;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -83,7 +84,7 @@ public class Squad {
     }
 
     public String getRoomId() {
-        return "squad_" + id;
+        return RoomIds.squad(id);
     }
 
     public Long getId() { return id; }

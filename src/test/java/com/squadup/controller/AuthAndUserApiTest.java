@@ -1,5 +1,6 @@
 package com.squadup.controller;
 
+import com.squadup.dto.AuthDtos;
 import com.squadup.support.ApiTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -53,6 +54,35 @@ class AuthAndUserApiTest extends ApiTestSupport {
                 .andExpect(jsonPath("$.fieldErrors.username").value("Username must be at least 3 characters."))
                 .andExpect(jsonPath("$.fieldErrors.email").value("Please enter a valid email address."))
                 .andExpect(jsonPath("$.fieldErrors.password").value("Password must be at least 6 characters."));
+    }
+
+    @Test
+    void usernamesCannotContainMarkupOrQuotes() throws Exception {
+        mvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("username", "x');alert(1);//", "email", "evil@test.com", "password", "secret123"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.username").value(AuthDtos.USERNAME_MESSAGE));
+    }
+
+    @Test
+    void avatarMustBeAnHttpUrl() throws Exception {
+        Player p = newPlayer("avatar");
+        mvc.perform(put("/api/v1/users/" + p.id()).header("Authorization", p.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("avatarUrl", "javascript:alert(1)"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Avatar must be an http(s) image URL."));
+        mvc.perform(put("/api/v1/users/" + p.id()).header("Authorization", p.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toJson(Map.of("avatarUrl", "https://example.com/me.png"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.avatarUrl").value("https://example.com/me.png"));
+        // an empty value resets to the default avatar
+        mvc.perform(put("/api/v1/users/" + p.id()).header("Authorization", p.bearer())
+                        .contentType(MediaType.APPLICATION_JSON).content(toJson(Map.of("avatarUrl", ""))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.avatarUrl").value(""));
     }
 
     @Test

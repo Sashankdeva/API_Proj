@@ -27,9 +27,6 @@ public final class ApiResponses {
     public record UserUpdated(boolean success, UserDto user) {
     }
 
-    public record UserList(List<UserSummary> users) {
-    }
-
     public record SquadList(List<SquadDto> squads) {
     }
 
