@@ -29,6 +29,13 @@ public record UserDto(
         int totalHours,
         Instant createdAt) {
 
+    /** The profile other players may see: the same data without the e-mail address. */
+    public UserDto withoutEmail() {
+        return new UserDto(id, username, null, displayName, bio, gameTags, region, language, avatarUrl,
+                firstName, lastName, age, gender, location, favoriteGame, skillLevel, platforms, playStyle,
+                gamesPlayed, totalHours, createdAt);
+    }
+
     public static UserDto from(User u) {
         return new UserDto(
                 u.getId(), u.getUsername(), u.getEmail(), u.getDisplayName(), u.getBio(),

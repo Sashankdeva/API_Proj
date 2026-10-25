@@ -30,7 +30,7 @@ import java.util.List;
 @Table(name = "users")
 @NamedQuery(
         name = "User.findByLogin",
-        query = "select u from User u where u.username = :login or u.email = lower(:login)")
+        query = "select u from User u where lower(u.username) = lower(:login) or u.email = lower(:login)")
 public class User {
 
     @Id

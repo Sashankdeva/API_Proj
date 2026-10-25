@@ -40,8 +40,10 @@ public final class AuthDtos {
 
     /** {@code username} may also be the account e-mail. */
     public record LoginRequest(
-            @NotBlank(message = "Username and password are required.") String username,
-            @NotBlank(message = "Username and password are required.") String password) {
+            @NotBlank(message = "Username and password are required.")
+            @Size(max = 120, message = "Username or password is too long.") String username,
+            @NotBlank(message = "Username and password are required.")
+            @Size(max = 72, message = "Username or password is too long.") String password) {
 
         @Override
         public String toString() {
@@ -64,5 +66,9 @@ public final class AuthDtos {
     }
 
     public record LoginResponse(boolean success, String token, UserDto user) {
+        @Override
+        public String toString() {
+            return "LoginResponse[success=" + success + ", token=***, user=" + (user == null ? null : user.username()) + "]";
+        }
     }
 }

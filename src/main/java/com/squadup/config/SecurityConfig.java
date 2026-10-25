@@ -3,6 +3,7 @@ package com.squadup.config;
 import com.squadup.security.JsonSecurityErrorHandler;
 import com.squadup.security.TokenAuthenticationFilter;
 import com.squadup.service.TokenService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,9 +21,9 @@ import org.springframework.security.web.firewall.StrictHttpFirewall;
  *
  * <ul>
  *   <li>Stateless: no HTTP session; every API call carries {@code Authorization: Bearer <token>}.</li>
- *   <li>Public: the static web UI, register/login, the SOAP service, the WebSocket handshake
- *       (STOMP frames are authenticated separately) and the H2 console.</li>
- *   <li>Everything else under {@code /api/**} requires a logged-in player.</li>
+ *   <li>Public: the static web UI, register/login, the SOAP WSDL, the WebSocket handshake
+ *       (STOMP frames are authenticated separately) and, only when enabled, the H2 console.</li>
+ *   <li>Everything else under {@code /api/**} and {@code /soap/**} requires a logged-in player.</li>
  * </ul>
  */
 @Configuration
@@ -31,7 +32,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, TokenService tokenService,
-                                                   JsonSecurityErrorHandler errorHandler) throws Exception {
+                                                   JsonSecurityErrorHandler errorHandler,
+                                                   @Value("${spring.h2.console.enabled:false}") boolean h2Console)
+            throws Exception {
         http
                 // Tokens travel in a header, not a cookie, so CSRF protection is not needed.
                 .csrf(csrf -> csrf.disable())
@@ -40,13 +43,19 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Lets the H2 console render its frames.
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/", "/*.html", "/*.js", "/*.css", "/favicon.ico", "/error").permitAll()
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        .requestMatchers("/soap/**", "/ws/**", "/h2-console/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().denyAll())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                            .requestMatchers("/", "/*.html", "/*.js", "/*.css", "/favicon.ico", "/error").permitAll()
+                            .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                            // The WSDL stays public so clients can generate stubs; SOAP calls need a token.
+                            .requestMatchers(HttpMethod.GET, "/soap/*.wsdl").permitAll()
+                            .requestMatchers("/soap/**", "/api/**").authenticated()
+                            .requestMatchers("/ws/**").permitAll();
+                    if (h2Console) {
+                        auth.requestMatchers("/h2-console/**").permitAll();
+                    }
+                    auth.anyRequest().denyAll();
+                })
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(errorHandler)
                         .accessDeniedHandler(errorHandler))

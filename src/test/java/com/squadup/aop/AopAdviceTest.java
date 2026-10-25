@@ -50,12 +50,21 @@ class AopAdviceTest {
     }
 
     @Test
+    void bearerTokensNeverReachTheLogs(CapturedOutput output) {
+        authService.register(new RegisterRequest("quiet_player", "quiet_player@test.com", "secret123"));
+        String token = authService.login(new LoginRequest("quiet_player", "secret123")).token();
+        authService.logout(token);
+
+        assertThat(output).doesNotContain(token);
+    }
+
+    @Test
     void afterThrowingAdviceLogsRejectedCallsAndAuditsFailedLogins(CapturedOutput output) {
         assertThatThrownBy(() -> authService.login(new LoginRequest("nobody_here", "whatever")))
                 .isInstanceOf(ApiException.class);
 
         assertThat(output)
-                .contains("x  AuthService.login rejected: Account not found")
+                .contains("x  AuthService.login rejected: Incorrect username or password.")
                 .contains("LOGIN_FAILED login=nobody_here");
     }
 

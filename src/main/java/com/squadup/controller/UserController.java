@@ -11,6 +11,7 @@ import com.squadup.dto.UserDto;
 import com.squadup.dto.UserSummary;
 import com.squadup.security.AccessGuard;
 import com.squadup.security.AuthUser;
+import com.squadup.service.TokenService;
 import com.squadup.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -65,21 +68,26 @@ public class UserController {
         return PageResponse.of(userService.search(username, PageRequest.of(page, size, Sort.by("username"))), s -> s);
     }
 
-    /** Players of a game, e.g. {@code GET /api/v1/users/players?game=Valorant&sortBy=totalHours&dir=desc}. */
+    /**
+     * Players of a game, e.g. {@code GET /api/v1/users/players?game=Valorant&sortBy=totalHours&dir=desc&limit=20}.
+     * At most {@code limit} players (default 50, maximum 100) are returned, without e-mail addresses.
+     */
     @GetMapping("/players")
     public List<UserDto> playersOfGame(
             @RequestParam String game,
             @RequestParam(defaultValue = "username") String sortBy,
-            @RequestParam(defaultValue = "asc") String dir) {
+            @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int limit) {
         Sort.Direction direction = "desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         String property = SORTABLE.contains(sortBy) ? sortBy : "username";
-        return userService.playersOfGame(game, Sort.by(direction, property));
+        return userService.playersOfGame(game, PageRequest.of(0, limit, Sort.by(direction, property)));
     }
 
     /** Public profile: any logged-in player can view it. */
     @GetMapping("/{id}")
-    public UserEnvelope get(@PathVariable Long id) {
-        return new UserEnvelope(userService.getProfile(id));
+    public UserEnvelope get(@PathVariable Long id, @AuthenticationPrincipal AuthUser me) {
+        UserDto profile = userService.getProfile(id);
+        return new UserEnvelope(id.equals(me.id()) ? profile : profile.withoutEmail());
     }
 
     @PutMapping("/{id}")
@@ -92,9 +100,10 @@ public class UserController {
 
     @PutMapping("/{id}/password")
     public Ack changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest request,
-                              @AuthenticationPrincipal AuthUser me) {
+                              @AuthenticationPrincipal AuthUser me,
+                              @RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
         AccessGuard.requireSelf(me, id);
-        userService.changePassword(id, request);
+        userService.changePassword(id, request, TokenService.extractBearer(authorization));
         return Ack.of("Password updated successfully.");
     }
 

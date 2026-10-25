@@ -1,7 +1,9 @@
 package com.squadup.soap;
 
+import com.squadup.dto.AuthDtos.LoginRequest;
 import com.squadup.dto.AuthDtos.RegisterRequest;
 import com.squadup.service.AuthService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +29,16 @@ class PlayerSoapEndpointTest {
     @Autowired
     private AuthService authService;
 
+    /** SOAP calls need the same bearer token as the REST API; the WSDL stays public. */
+    private String token;
+
+    @BeforeEach
+    void logIn() {
+        String name = "soap_client_" + System.nanoTime();
+        authService.register(new RegisterRequest(name, name + "@test.com", "secret123"));
+        token = authService.login(new LoginRequest(name, "secret123")).token();
+    }
+
     @Test
     void wsdlIsPublished() {
         String wsdl = http.getForObject("/soap/players.wsdl", String.class);
@@ -35,6 +47,17 @@ class PlayerSoapEndpointTest {
                 .contains("getPlayer")
                 .contains("searchPlayers")
                 .contains("PlayersPort");
+    }
+
+    @Test
+    void soapCallsWithoutATokenAreRejected() {
+        ResponseEntity<String> response = post(null, """
+                <p:getPlayerRequest xmlns:p="http://squadup.com/soap/players">
+                    <p:username>anyone</p:username>
+                </p:getPlayerRequest>""");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+        assertThat(response.getBody()).contains("Please log in to continue.");
     }
 
     @Test
@@ -81,6 +104,10 @@ class PlayerSoapEndpointTest {
     }
 
     private ResponseEntity<String> call(String payload) {
+        return post(token, payload);
+    }
+
+    private ResponseEntity<String> post(String bearerToken, String payload) {
         String envelope = """
                 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
                     <soapenv:Header/>
@@ -88,6 +115,9 @@ class PlayerSoapEndpointTest {
                 </soapenv:Envelope>""".formatted(payload);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_XML);
+        if (bearerToken != null) {
+            headers.setBearerAuth(bearerToken);
+        }
         return http.postForEntity("/soap", new HttpEntity<>(envelope, headers), String.class);
     }
 }

@@ -30,12 +30,17 @@ Open **http://localhost:5500** and log in with a demo account. On first start th
 filled with 20 players, 18 squads, friendships and chat history. **The password of every demo
 player is the same as the username**, e.g. `sniperking` / `sniperking`, `neon_ninja` / `neon_ninja`.
 
+> The demo data and the H2 console belong to the **`dev` profile**, which is used automatically
+> when you start the app without choosing a profile. If you pick any other profile (for example
+> `--spring.profiles.active=mysql`) both are off. This keeps demo passwords and the database
+> console out of anything that is not a local run.
+
 | What                  | URL                                                    |
 |-----------------------|--------------------------------------------------------|
 | Web app               | http://localhost:5500                                  |
 | REST API              | http://localhost:5500/api/v1/...                       |
-| SOAP WSDL (SoapUI)    | http://localhost:5500/soap/players.wsdl                |
-| H2 database console   | http://localhost:5500/h2-console (JDBC URL `jdbc:h2:file:./data/squadup`, user `sa`, no password) |
+| SOAP WSDL (SoapUI)    | http://localhost:5500/soap/players.wsdl (public; SOAP calls need a bearer token) |
+| H2 database console   | `dev` profile only: http://localhost:5500/h2-console (JDBC URL `jdbc:h2:file:./data/squadup`, user `sa`, no password) |
 
 Run the tests (55 tests covering every unit):
 
@@ -49,9 +54,12 @@ MySQL 8 is supported through the `mysql` profile ([application-mysql.properties]
 The database `squadup` is created automatically; credentials come from environment variables.
 
 ```powershell
-$env:DB_USERNAME="root"; $env:DB_PASSWORD="your-password"
+$env:DB_USERNAME="root"; $env:DB_PASSWORD="your-password"   # DB_PASSWORD is required, there is no default
 .\start.ps1 mysql
 ```
+
+`start.ps1` runs MySQL together with the `dev` profile, so the demo data is loaded. For a run
+without demo data use `.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"`.
 
 ---
 
@@ -189,6 +197,27 @@ Errors always look like `{"error": "...", "status": 400, "path": "...", "request
 | GET | `/api/v1/chat/history/{roomId}?limit=50` | Chat history (room members only) |
 | GET | `/api/v1/stats?topGames=5` | Platform statistics (JdbcTemplate) |
 
+### Security notes
+
+* **Login**: one generic message (`Incorrect username or password.`) for unknown accounts and wrong
+  passwords; input sizes are limited. After 5 failed attempts for the same login **from the same address**
+  the API answers `429` for 15 minutes (`squadup.auth.max-failed-logins`, `squadup.auth.lockout`), so a
+  stranger cannot lock a player out from somewhere else. All login attempts from one address are also
+  limited (100 per 5 minutes, `login-attempt`). Usernames are unique regardless of letter case; at startup
+  a warning lists any old accounts that differ only by case.
+* **Sessions**: bearer tokens are stored only as SHA-256 hashes, a player keeps at most 10 sessions
+  (`squadup.auth.max-sessions`), and changing the password signs the player out of every other session.
+  Tokens are kept out of the debug log (`@SkipLogging`).
+* **Privacy**: other players, in profiles and in `/users/players` (at most 100 per call, `limit`), never see the e-mail address.
+* **Rate limits** (`429` when exceeded, tunable as `squadup.rate-limit.<name>`): 20 sign-ups per hour per
+  IP address (`register`), 30 friend requests per hour (`friend-request`), 10 new squads per hour
+  (`squad-create`), 30 chat messages per minute (`chat-message`) and 60 SOAP calls per minute (`soap-call`)
+  per player. Typing indicators beyond 30 per 10 seconds are silently dropped (`typing`). Behind a reverse
+  proxy set `server.forward-headers-strategy=native`, otherwise every client appears with the proxy's address.
+* **Cross-origin access**: the web page is served by the application itself, so only same-origin calls are
+  allowed unless `squadup.cors.allowed-origins` lists more (the `dev` profile uses `*`).
+* **Recommendations** score the 500 newest open squads.
+
 ### Try it with curl
 
 ```bash
@@ -210,10 +239,13 @@ In Postman, set the `Authorization` tab to *Bearer Token* and paste the token fr
 
 ### SOAP with SoapUI or curl
 
-In SoapUI choose *New SOAP Project* and use `http://localhost:5500/soap/players.wsdl`. With curl:
+The WSDL is public, but SOAP calls need the same bearer token as the REST API (log in first, see
+above). In SoapUI choose *New SOAP Project*, use `http://localhost:5500/soap/players.wsdl` and add an
+`Authorization: Bearer <token>` header to the request. With curl:
 
 ```bash
-curl -s -X POST http://localhost:5500/soap -H "Content-Type: text/xml" -d '
+curl -s -X POST http://localhost:5500/soap -H "Content-Type: text/xml" \
+  -H "Authorization: Bearer $TOKEN" -d '
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:p="http://squadup.com/soap/players">
   <soapenv:Body>

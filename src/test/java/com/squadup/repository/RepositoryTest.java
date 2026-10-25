@@ -67,10 +67,18 @@ class RepositoryTest {
     }
 
     @Test
+    void findsUsernamesThatDifferOnlyByCase() {
+        users.save(new User("Dupe", "dupe1@test.com", "x"));
+        users.save(new User("dupe", "dupe2@test.com", "x"));   // the database constraint is case-sensitive
+
+        assertThat(users.findUsernamesDifferingOnlyByCase()).containsExactly("dupe");
+    }
+
+    @Test
     void namedQueryFindsByUsernameOrEmail() {
         assertThat(users.findByLogin("alice")).map(User::getId).contains(alice.getId());
         assertThat(users.findByLogin("ALICE@TEST.COM")).map(User::getId).contains(alice.getId());
-        assertThat(users.findByLogin("Alice")).isEmpty(); // usernames are case-sensitive
+        assertThat(users.findByLogin("Alice")).map(User::getId).contains(alice.getId()); // any letter case
     }
 
     @Test
@@ -84,7 +92,7 @@ class RepositoryTest {
 
     @Test
     void jpqlQueryWithDynamicSort() {
-        List<User> players = users.findPlayersOfGame("Valorant", Sort.by(Sort.Direction.DESC, "username"));
+        List<User> players = users.findPlayersOfGame("Valorant", PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "username")));
         assertThat(players).extracting(User::getUsername).containsExactly("carol", "alice");
     }
 

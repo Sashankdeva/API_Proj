@@ -1,5 +1,6 @@
 package com.squadup.service.impl;
 
+import com.squadup.aop.SkipLogging;
 import com.squadup.dto.AuthDtos.ChangePasswordRequest;
 import com.squadup.dto.UpdateProfileRequest;
 import com.squadup.dto.UserDto;
@@ -21,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getByUsername(String username) {
-        return users.findByUsername(username)
+        return users.findByUsernameIgnoreCase(username)
                 .map(UserDto::from)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
     }
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
         User user = load(userId);
 
         if (r.newUsername() != null && !r.newUsername().equals(user.getUsername())) {
-            Optional<User> existing = users.findByUsername(r.newUsername());
+            Optional<User> existing = users.findByUsernameIgnoreCase(r.newUsername());
             if (existing.isPresent() && !existing.get().getId().equals(userId)) {
                 throw ApiException.conflict("Username already taken.");
             }
@@ -109,12 +109,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest r) {
+    @SkipLogging   // an argument is a bearer token
+    public void changePassword(Long userId, ChangePasswordRequest r, String currentToken) {
         User user = load(userId);
         if (!passwordEncoder.matches(r.currentPassword(), user.getPassword())) {
             throw ApiException.unauthorized("Current password is incorrect.");
         }
         user.setPassword(passwordEncoder.encode(r.newPassword()));
+        tokenService.revokeAllExcept(userId, currentToken);
     }
 
     /**
@@ -167,8 +169,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> playersOfGame(String game, Sort sort) {
-        return users.findPlayersOfGame(game, sort).stream().map(UserDto::from).toList();
+    public List<UserDto> playersOfGame(String game, Pageable pageable) {
+        return users.findPlayersOfGame(game, pageable).stream().map(u -> UserDto.from(u).withoutEmail()).toList();
     }
 
     private User load(Long userId) {

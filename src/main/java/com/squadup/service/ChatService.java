@@ -9,6 +9,7 @@ import com.squadup.exception.ResourceNotFoundException;
 import com.squadup.repository.MessageRepository;
 import com.squadup.repository.SquadRepository;
 import com.squadup.repository.UserRepository;
+import com.squadup.security.RateLimiter;
 import com.squadup.util.RoomIds;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -29,12 +30,15 @@ public class ChatService {
     private final MessageRepository messages;
     private final UserRepository users;
     private final SquadRepository squads;
+    private final RateLimiter rateLimiter;
     private ChatModerator moderator;
 
-    public ChatService(MessageRepository messages, UserRepository users, SquadRepository squads) {
+    public ChatService(MessageRepository messages, UserRepository users, SquadRepository squads,
+                       RateLimiter rateLimiter) {
         this.messages = messages;
         this.users = users;
         this.squads = squads;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -74,6 +78,7 @@ public class ChatService {
     @Transactional
     public ChatMessageDto send(Long userId, String roomId, String text) {
         requireAccess(userId, roomId);
+        rateLimiter.check(RateLimiter.Rule.CHAT_MESSAGE, userId);
         User sender = users.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found."));
         MessageType type = RoomIds.isSquadRoom(roomId) ? MessageType.GROUP : MessageType.DM;
         Message saved = messages.save(new Message(roomId, sender, moderator.moderate(text), type));

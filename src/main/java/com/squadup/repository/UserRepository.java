@@ -4,7 +4,9 @@ import com.squadup.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,9 +16,19 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     // ── 1. Derived query methods (query generated from the method name) ──
-    Optional<User> findByUsername(String username);
+    /** Usernames are unique regardless of case, so "Admin" cannot imitate "admin". */
+    Optional<User> findByUsernameIgnoreCase(String username);
 
-    boolean existsByUsername(String username);
+    boolean existsByUsernameIgnoreCase(String username);
+
+    /** Lower-cased usernames that more than one account has, e.g. "Admin" and "admin" (old data only). */
+    @Query("select lower(u.username) from User u group by lower(u.username) having count(u) > 1")
+    List<String> findUsernamesDifferingOnlyByCase();
+
+    /** Locks the row until the transaction ends (SELECT ... FOR UPDATE). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.id = :id")
+    Optional<User> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByEmail(String email);
 
@@ -28,5 +40,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // ── 3. @Query (JPQL) with a dynamic Sort supplied by the caller ──
     @Query("select u from User u where lower(u.favoriteGame) = lower(:game) or :game member of u.gameTags")
-    List<User> findPlayersOfGame(@Param("game") String game, Sort sort);
+    List<User> findPlayersOfGame(@Param("game") String game, Pageable pageable);
 }

@@ -6,6 +6,7 @@ import com.squadup.dto.ChatDtos.SendMessage;
 import com.squadup.dto.ChatDtos.Typing;
 import com.squadup.exception.ApiException;
 import com.squadup.security.AuthUser;
+import com.squadup.security.RateLimiter;
 import com.squadup.service.ChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +28,12 @@ public class ChatSocketController {
 
     private final ChatService chatService;
     private final RealtimeNotifier notifier;
+    private final RateLimiter rateLimiter;
 
-    public ChatSocketController(ChatService chatService, RealtimeNotifier notifier) {
+    public ChatSocketController(ChatService chatService, RealtimeNotifier notifier, RateLimiter rateLimiter) {
         this.chatService = chatService;
         this.notifier = notifier;
+        this.rateLimiter = rateLimiter;
     }
 
     /** SEND /app/chat.send {"roomId": "...", "text": "..."}: stored, then broadcast to the room. */
@@ -41,11 +44,12 @@ public class ChatSocketController {
         notifier.toRoom(saved.roomId(), RoomEvent.message(saved));
     }
 
-    /** SEND /app/chat.typing {"roomId": "...", "typing": true}: relayed without being stored. */
+    /** SEND /app/chat.typing {"roomId": "...", "typing": true}: relayed without being stored; too frequent events are dropped. */
     @MessageMapping("chat.typing")
     public void typing(@Payload Typing payload, Principal principal) {
         AuthUser me = user(principal);
-        if (payload.roomId() != null && chatService.canAccessRoom(me.id(), payload.roomId())) {
+        if (payload.roomId() != null && rateLimiter.allow(RateLimiter.Rule.TYPING, me.id())
+                && chatService.canAccessRoom(me.id(), payload.roomId())) {
             notifier.toRoom(payload.roomId(), RoomEvent.typing(me.id(), me.username(), payload.typing()));
         }
     }

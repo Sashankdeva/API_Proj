@@ -55,8 +55,8 @@ class SquadUpApiClientTest {
     void errorsSurfaceAsHttpClientExceptions() {
         SquadUpApiClient client = client();
         assertThatThrownBy(() -> client.login("no_such_player", "whatever"))
-                .isInstanceOf(HttpClientErrorException.NotFound.class)
-                .hasMessageContaining("Account not found");
+                .isInstanceOf(HttpClientErrorException.Unauthorized.class)
+                .hasMessageContaining("Incorrect username or password.");
         assertThatThrownBy(client::stats)
                 .isInstanceOf(HttpClientErrorException.Unauthorized.class);
     }

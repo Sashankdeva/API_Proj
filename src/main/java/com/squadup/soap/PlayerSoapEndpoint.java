@@ -4,6 +4,8 @@ import com.squadup.dto.UserDto;
 import com.squadup.dto.UserSummary;
 import com.squadup.exception.ApiException;
 import com.squadup.exception.ResourceNotFoundException;
+import com.squadup.security.AuthUser;
+import com.squadup.security.RateLimiter;
 import com.squadup.service.UserService;
 import com.squadup.soap.schema.GetPlayerRequest;
 import com.squadup.soap.schema.GetPlayerResponse;
@@ -15,6 +17,8 @@ import com.squadup.soap.schema.SoapPlayerSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
@@ -36,14 +40,17 @@ public class PlayerSoapEndpoint {
     private static final int MAX_RESULTS = 50;
 
     private final UserService userService;
+    private final RateLimiter rateLimiter;
 
-    public PlayerSoapEndpoint(UserService userService) {
+    public PlayerSoapEndpoint(UserService userService, RateLimiter rateLimiter) {
         this.userService = userService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PayloadRoot(namespace = SoapNamespace.URI, localPart = "getPlayerRequest")
     @ResponsePayload
     public GetPlayerResponse getPlayer(@RequestPayload GetPlayerRequest request) {
+        throttle();
         try {
             UserDto user = userService.getByUsername(Objects.requireNonNullElse(request.getUsername(), "").trim());
             GetPlayerResponse response = new GetPlayerResponse();
@@ -57,6 +64,7 @@ public class PlayerSoapEndpoint {
     @PayloadRoot(namespace = SoapNamespace.URI, localPart = "searchPlayersRequest")
     @ResponsePayload
     public SearchPlayersResponse searchPlayers(@RequestPayload SearchPlayersRequest request) {
+        throttle();
         int max = request.getMaxResults() == null ? DEFAULT_RESULTS
                 : Math.max(1, Math.min(request.getMaxResults(), MAX_RESULTS));
         Page<UserSummary> page;
@@ -76,6 +84,17 @@ public class PlayerSoapEndpoint {
             response.getPlayer().add(s);
         });
         return response;
+    }
+
+    /** Each logged-in caller may make a limited number of SOAP calls per minute; the rest get a SOAP fault. */
+    private void throttle() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Object caller = auth != null && auth.getPrincipal() instanceof AuthUser user ? user.id() : "anonymous";
+        try {
+            rateLimiter.check(RateLimiter.Rule.SOAP_CALL, caller);
+        } catch (ApiException e) {
+            throw new InvalidSoapRequestException(e.getMessage());
+        }
     }
 
     private static SoapPlayer toSoap(UserDto u) {

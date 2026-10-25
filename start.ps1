@@ -23,7 +23,8 @@ foreach ($line in $connections) {
 Write-Host ""
 Write-Host "Starting SquadUp (Spring Boot) on http://localhost:$port ..." -ForegroundColor Green
 if ($DbProfile) {
-    .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=$DbProfile"
+    # "dev" keeps the demo data; listing it first lets the database profile win where they overlap.
+    .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=dev,$DbProfile"
 } else {
     .\mvnw.cmd spring-boot:run
 }

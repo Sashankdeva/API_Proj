@@ -12,10 +12,12 @@ import com.squadup.matching.SquadMatcher;
 import com.squadup.repository.MessageRepository;
 import com.squadup.repository.SquadRepository;
 import com.squadup.repository.UserRepository;
+import com.squadup.security.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,21 +31,26 @@ public class SquadService {
 
     private static final Logger log = LoggerFactory.getLogger(SquadService.class);
 
+    /** Upper bound of squads scored per recommendation request. */
+    private static final int MAX_CANDIDATES = 500;
+
     private final SquadRepository squads;
     private final UserRepository users;
     private final MessageRepository messages;
     private final ObjectProvider<SquadMatcher> matchers;
+    private final RateLimiter rateLimiter;
 
     /**
      * {@code ObjectProvider} gives lazy access to a bean. Because {@link SquadMatcher} is
      * prototype-scoped, every {@code matchers.getObject()} call returns a new instance.
      */
     public SquadService(SquadRepository squads, UserRepository users, MessageRepository messages,
-                        ObjectProvider<SquadMatcher> matchers) {
+                        ObjectProvider<SquadMatcher> matchers, RateLimiter rateLimiter) {
         this.squads = squads;
         this.users = users;
         this.messages = messages;
         this.matchers = matchers;
+        this.rateLimiter = rateLimiter;
     }
 
     public List<SquadDto> squadsOf(Long userId) {
@@ -70,16 +77,18 @@ public class SquadService {
         return mapper.apply(load(squadId));
     }
 
+    /** Only the newest open squads are scored, so one request never loads the whole table. */
     public List<SquadMatch> recommend(Long userId, int limit) {
         User player = loadUser(userId);
         SquadMatcher matcher = matchers.getObject().forPlayer(player);
-        squads.search(new SquadSearchCriteria(null, null, null, true, userId), Pageable.unpaged())
+        squads.search(new SquadSearchCriteria(null, null, null, true, userId), PageRequest.of(0, MAX_CANDIDATES))
                 .forEach(matcher::consider);
         return matcher.top(limit);
     }
 
     @Transactional
     public SquadDto create(Long ownerId, CreateSquadRequest req) {
+        rateLimiter.check(RateLimiter.Rule.SQUAD_CREATE, ownerId);
         User owner = loadUser(ownerId);
         String language = (req.language() == null || req.language().isBlank()) ? "English" : req.language().trim();
         int maxMembers = req.maxMembers() == null ? 5 : req.maxMembers();

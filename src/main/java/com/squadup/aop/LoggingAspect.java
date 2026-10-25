@@ -35,7 +35,8 @@ public class LoggingAspect {
     private static final int MAX_ARG_LENGTH = 120;
 
     /** Every public method of every class in com.squadup.service and its sub-packages. */
-    @Pointcut("within(com.squadup.service..*) && execution(public * *(..))")
+    @Pointcut("within(com.squadup.service..*) && execution(public * *(..))"
+            + " && !@annotation(com.squadup.aop.SkipLogging) && !@within(com.squadup.aop.SkipLogging)")
     public void serviceLayer() {
     }
 

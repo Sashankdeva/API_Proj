@@ -89,9 +89,47 @@ class ChatWebSocketTest {
     }
 
     @Test
+    void aPlayerOutsideTheSquadReceivesNothingFromItsRoom() throws Exception {
+        authService.register(new RegisterRequest("ws_member", "ws_member@test.com", "secret123"));
+        authService.register(new RegisterRequest("ws_outsider", "ws_outsider@test.com", "secret123"));
+        LoginResponse member = authService.login(new LoginRequest("ws_member", "secret123"));
+        LoginResponse outsider = authService.login(new LoginRequest("ws_outsider", "secret123"));
+        SquadDto squad = squadService.create(member.user().id(), new CreateSquadRequest("Private Squad", "CS2", "English", 5));
+
+        StompSession memberSession = connect(member.token());
+        StompSession outsiderSession = connect(outsider.token());
+        BlockingQueue<RoomEvent> memberInbox = new LinkedBlockingQueue<>();
+        BlockingQueue<RoomEvent> outsiderInbox = new LinkedBlockingQueue<>();
+        memberSession.subscribe("/topic/room." + squad.roomId(), collector(memberInbox));
+        outsiderSession.subscribe("/topic/room." + squad.roomId(), collector(outsiderInbox));
+        Thread.sleep(300); // let both SUBSCRIBE frames reach the broker
+
+        memberSession.send("/app/chat.send", new SendMessage(squad.roomId(), "squad only"));
+
+        assertThat(memberInbox.poll(5, TimeUnit.SECONDS)).isNotNull();   // the member sees it...
+        assertThat(outsiderInbox.poll(1, TimeUnit.SECONDS)).isNull();    // ...the outsider does not
+        memberSession.disconnect();
+        outsiderSession.disconnect();
+    }
+
+    @Test
     void connectWithoutAValidTokenIsRejected() {
         assertThatThrownBy(() -> connect("bogus-token"))
                 .isInstanceOf(ExecutionException.class);
+    }
+
+    private static StompFrameHandler collector(BlockingQueue<RoomEvent> inbox) {
+        return new StompFrameHandler() {
+            @Override
+            public Type getPayloadType(StompHeaders headers) {
+                return RoomEvent.class;
+            }
+
+            @Override
+            public void handleFrame(StompHeaders headers, Object payload) {
+                inbox.add((RoomEvent) payload);
+            }
+        };
     }
 
     private StompSession connect(String token) throws Exception {

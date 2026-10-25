@@ -8,6 +8,7 @@ import com.squadup.exception.ApiException;
 import com.squadup.exception.ResourceNotFoundException;
 import com.squadup.repository.FriendshipRepository;
 import com.squadup.repository.UserRepository;
+import com.squadup.security.RateLimiter;
 import com.squadup.websocket.FriendshipChangedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -23,11 +24,14 @@ public class FriendService {
     private final FriendshipRepository friendships;
     private final UserRepository users;
     private final ApplicationEventPublisher events;
+    private final RateLimiter rateLimiter;
 
-    public FriendService(FriendshipRepository friendships, UserRepository users, ApplicationEventPublisher events) {
+    public FriendService(FriendshipRepository friendships, UserRepository users, ApplicationEventPublisher events,
+                         RateLimiter rateLimiter) {
         this.friendships = friendships;
         this.users = users;
         this.events = events;
+        this.rateLimiter = rateLimiter;
     }
 
     public List<FriendDto> friendsOf(Long userId) {
@@ -45,6 +49,7 @@ public class FriendService {
 
     @Transactional
     public String sendRequest(Long requesterId, String recipientUsername) {
+        rateLimiter.check(RateLimiter.Rule.FRIEND_REQUEST, requesterId);
         User me = users.findById(requesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Your account was not found."));
         String target = recipientUsername.trim().replaceFirst("^@", "");
@@ -52,9 +57,10 @@ public class FriendService {
         if (me.getUsername().equalsIgnoreCase(target)) {
             throw ApiException.badRequest("You can't add yourself.");
         }
-        User recipient = users.findByUsername(target)
+        User recipient = users.findByUsernameIgnoreCase(target)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
 
+        lockPair(me.getId(), recipient.getId());
         friendships.findBetween(me.getId(), recipient.getId()).ifPresent(existing -> {
             throw ApiException.conflict(existing.getStatus() == FriendshipStatus.ACCEPTED
                     ? "Already friends."
@@ -94,6 +100,16 @@ public class FriendService {
             events.publishEvent(FriendshipChangedEvent.of(
                     friendship.getRequester().getId(), friendship.getRecipient().getId()));
         });
+    }
+
+    /**
+     * Locks both players, lower id first so two opposite requests cannot deadlock. This makes the
+     * "already requested?" check and the insert one step, so A to B and B to A sent at the same
+     * moment cannot both succeed.
+     */
+    private void lockPair(Long a, Long b) {
+        users.findByIdForUpdate(Math.min(a, b));
+        users.findByIdForUpdate(Math.max(a, b));
     }
 
     private Friendship load(Long friendshipId) {

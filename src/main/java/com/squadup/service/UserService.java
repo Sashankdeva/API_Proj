@@ -6,7 +6,6 @@ import com.squadup.dto.UserDto;
 import com.squadup.dto.UserSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -22,7 +21,8 @@ public interface UserService {
 
     UserDto updateProfile(Long userId, UpdateProfileRequest request);
 
-    void changePassword(Long userId, ChangePasswordRequest request);
+    /** Changes the password and signs out every other session; {@code currentToken} stays valid. */
+    void changePassword(Long userId, ChangePasswordRequest request, String currentToken);
 
     void deleteAccount(Long userId);
 
@@ -30,5 +30,6 @@ public interface UserService {
 
     Page<UserSummary> directory(Pageable pageable);
 
-    List<UserDto> playersOfGame(String game, Sort sort);
+    /** Players of a game, sorted and limited by {@code pageable}; e-mail addresses are left out. */
+    List<UserDto> playersOfGame(String game, Pageable pageable);
 }
